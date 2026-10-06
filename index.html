@@ -12,7 +12,18 @@
 <div class="hint" id="notifyStatus">As notificações precisam ser autorizadas no iPhone.</div></section>
 <div class='grid'><div class='stat'><b id='todayCount'>0</b>Hoje</div><div class='stat'><b id='schoolCount'>0</b>Escola</div><div class='stat'><b id='tourCount'>0</b>SGS</div><div class='stat'><b id='pendingCount'>0</b>Pendentes</div></div>
 <h2>Minhas tarefas</h2><div class='filter' id='filters'></div><div id='list'></div></main><div class='toast' id='toast'></div>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "93373f2b-4612-4a68-9eaa-c0fdade3aee0",
+    serviceWorkerPath: "OneSignalSDKWorker.js",
+    serviceWorkerParam: { scope: "/meu-planner-bruna/onesignal/" },
+    notifyButton: { enable: false }
+  });
+});
+</script><script>
 const CATS=['Tudo','Escola','SGS Vinho & Café','Pessoal','Compromissos','Compras','Hábitos','Ideias'];let active='Tudo';let tasks=JSON.parse(localStorage.getItem('brunaTasks')||'[]');
 const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function schoolGrade(s){let m=s.match(/\b([6789])\s*(?:º|o)?\s*ano\b/);if(m)return m[1]+'º ano';let w={sexto:'6º ano',sexta:'6º ano',setimo:'7º ano',setima:'7º ano',oitavo:'8º ano',oitava:'8º ano',nono:'9º ano',nona:'9º ano'};for(let k in w)if(new RegExp('\\b'+k+'\\s+ano\\b').test(s))return w[k];return ''}
