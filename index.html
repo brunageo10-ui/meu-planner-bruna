@@ -22,6 +22,13 @@ OneSignalDeferred.push(async function(OneSignal) {
     serviceWorkerParam: { scope: "/meu-planner-bruna/onesignal/" },
     notifyButton: { enable: false }
   });
+  if ("Notification" in window && Notification.permission === "granted") {
+  try {
+    await OneSignal.User.PushSubscription.optIn();
+  } catch (e) {
+    console.log("OneSignal opt-in:", e);
+  }
+}
 });
 </script><script>
 const CATS=['Tudo','Escola','SGS Vinho & Café','Pessoal','Compromissos','Compras','Hábitos','Ideias'];let active='Tudo';let tasks=JSON.parse(localStorage.getItem('brunaTasks')||'[]');
