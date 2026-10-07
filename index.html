@@ -84,7 +84,7 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;document.getEl
     btn.addEventListener('click', async ()=>{
       if(!('Notification' in window)) return refreshNotificationUI();
       try {
-        const p = await Notification.requestPermission();
+        const p = await OneSignal.Notifications.requestPermission();
         refreshNotificationUI();
         if(p==='granted'){
           const reg = await navigator.serviceWorker.ready;
