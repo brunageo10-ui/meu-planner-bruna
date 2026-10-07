@@ -18,8 +18,8 @@ window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
   await OneSignal.init({
     appId: "93373f2b-4612-4a68-9eaa-c0fdade3aee0",
-    serviceWorkerPath: "OneSignalSDKWorker.js",
-    serviceWorkerParam: { scope: "/meu-planner-bruna/onesignal/" },
+    
+    
     notifyButton: { enable: false }
   });
   if ("Notification" in window && Notification.permission === "granted") {
