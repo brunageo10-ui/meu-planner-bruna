@@ -57,11 +57,6 @@ function render(){let today=new Date().toISOString().slice(0,10);document.getEle
 function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function toggle(id){let t=tasks.find(x=>x.id===id);t.done=!t.done;save()}function del(id){tasks=tasks.filter(x=>x.id!==id);save()}function toast(s){let e=document.getElementById('toast');e.textContent=s;e.style.display='block';setTimeout(()=>e.style.display='none',2600)}
 document.getElementById('add').onclick=addTask;document.getElementById('input').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')addTask()});
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;document.getElementById('voice').onclick=()=>{if(!SR)return toast('O reconhecimento de voz depende do navegador. No iPhone, você também pode usar o microfone do teclado.');let r=new SR();r.lang='pt-BR';r.onresult=e=>document.getElementById('input').value=e.results[0][0].transcript;r.onerror=()=>toast('Não consegui ouvir. Tente novamente.');r.start()};
-if('serviceWorker' in navigator){
-      navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
-    }
-    render();
-</script>
 <script>
 (async function(){
   const status = document.getElementById('notifyStatus');
