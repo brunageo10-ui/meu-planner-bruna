@@ -51,6 +51,50 @@ function parseReminder(text){
   return /^(h|hora)/.test(m[2])?n*60:n
 }
 function reminderLabel(mins){if(!mins)return '';if(mins%60===0)return (mins/60)+'h antes';return mins+' min antes'}
+function reminderDueAt(t){
+  let text=norm(t.text||'');
+  let m=text.match(/daqui\s+(\d+)\s*(minuto|minutos|min|hora|horas|h)\b/);
+  if(m){
+    let n=Number(m[1]);
+    let mins=/h|hora/.test(m[2])?n*60:n;
+    return new Date(new Date(t.created||Date.now()).getTime()+mins*60000);
+  }
+  if(t.time){
+    let d=t.date?new Date(t.date+'T'+t.time):new Date();
+    if(!t.date){
+      let p=t.time.split(':').map(Number);
+      d.setHours(p[0],p[1],0,0);
+    }
+    return d;
+  }
+  return null;
+}
+async function firePlannerReminder(t){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    reg.showNotification('Meu Planner 💛',{
+      body:t.text||'Você tem um lembrete.',
+      icon:'./icon-192.png',
+      badge:'./icon-192.png'
+    });
+  }catch(e){}
+}
+function checkReminders(){
+  let sent=JSON.parse(localStorage.getItem('brunaNotified')||'[]');
+  let now=Date.now();
+  tasks.forEach(t=>{
+    let due=reminderDueAt(t);
+    if(!due||t.done||sent.includes(t.id))return;
+    let diff=due.getTime()-now;
+    if(diff<=0&&diff>-300000){
+      sent.push(t.id);
+      firePlannerReminder(t);
+    }
+  });
+  localStorage.setItem('brunaNotified',JSON.stringify(sent.slice(-200)));
+}
+setInterval(checkReminders,15000);
 function addTask(){let text=document.getElementById('input').value.trim();if(!text)return toast('Escreva ou fale alguma coisa primeiro.');let c=classify(text),time=parseTime(text),reminder=parseReminder(text);tasks.unshift({id:Date.now(),text,cat:c.cat,sub:c.sub,date:parseDate(text),time,reminder,done:false,created:new Date().toISOString()});save();document.getElementById('input').value='';toast(`Organizado em ${c.cat}${c.sub?' › '+c.sub:''}${time?' • '+time:''}${reminder?' • aviso '+reminderLabel(reminder):''}`)}
 function save(){localStorage.setItem('brunaTasks',JSON.stringify(tasks));render()}
 function render(){let today=new Date().toISOString().slice(0,10);document.getElementById('todayCount').textContent=tasks.filter(t=>!t.done&&t.date===today).length;document.getElementById('schoolCount').textContent=tasks.filter(t=>!t.done&&t.cat==='Escola').length;document.getElementById('tourCount').textContent=tasks.filter(t=>!t.done&&t.cat==='SGS Vinho & Café').length;document.getElementById('pendingCount').textContent=tasks.filter(t=>!t.done).length;document.getElementById('filters').innerHTML=CATS.map(c=>`<button class="chip ${c===active?'active':''}" onclick="active='${c}';render()">${c}</button>`).join('');let arr=tasks.filter(t=>active==='Tudo'||t.cat===active),el=document.getElementById('list');if(!arr.length){el.innerHTML='<div class="empty">Nenhuma tarefa aqui ainda 🌿</div>';return}el.innerHTML=arr.map(t=>`<div class="item ${t.done?'done':''}"><button class="check" onclick="toggle(${t.id})">${t.done?'✓':''}</button><div style="flex:1"><div>${esc(t.text)}</div><div class="meta"><span class="tag">${t.cat}</span>${t.sub?`<span class="tag">${t.sub}</span>`:''}${t.date?' 📅 '+new Date(t.date+'T12:00').toLocaleDateString('pt-BR'):''}${t.time?` <span class="time">🕐 ${esc(t.time)}</span>`:''}${t.reminder?` <span class="reminder">🔔 ${reminderLabel(t.reminder)}</span>`:''}</div></div><button class="btn secondary" style="padding:7px 9px" onclick="del(${t.id})">×</button></div>`).join('')}
