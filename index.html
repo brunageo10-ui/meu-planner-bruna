@@ -86,7 +86,7 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;document.getEl
       try {
         const p = await OneSignal.Notifications.requestPermission();
         refreshNotificationUI();
-        if(p==='granted'){
+        if(Notification.permission==='granted'){
           const reg = await navigator.serviceWorker.ready;
           reg.showNotification('Meu Planner 💛', {
             body:'Notificações ativadas. Este é um aviso de teste.',
