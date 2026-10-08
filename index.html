@@ -63,6 +63,14 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;document.getEl
   const btn = document.getElementById('notifyBtn');
 
   function refreshNotificationUI(){
+   try {
+  OneSignalDeferred.push(function(OneSignal){
+    if (OneSignal.Notifications.permission || OneSignal.User.PushSubscription.optedIn) {
+      if(status) status.textContent='✅ Notificações autorizadas no iPhone.';
+      if(btn) btn.textContent='🔔 Notificações ativadas';
+    }
+  });
+} catch(e) {} 
     if(!('Notification' in window)){
       if(status) status.textContent='Este modo do navegador não oferece notificações web.';
       if(btn) btn.disabled=true;
