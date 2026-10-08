@@ -95,7 +95,7 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;document.getEl
           });
         }
       } catch(e) {
-        if(status) status.textContent='Não foi possível pedir a permissão nesta abertura.';
+if(status) status.textContent='Erro: '+e.message;
       }
     });
   }
