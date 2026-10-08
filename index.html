@@ -70,6 +70,7 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;document.getEl
       if(btn) btn.textContent='🔔 Notificações ativadas';
     }
   });
+     return;
 } catch(e) {} 
     if(!('Notification' in window)){
       if(status) status.textContent='Este modo do navegador não oferece notificações web.';
