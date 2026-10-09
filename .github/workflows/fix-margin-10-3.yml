@@ -1,0 +1,49 @@
+name: Fix Margin 10.3
+on:
+  push:
+    paths:
+      - trigger-margin-10-3.txt
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corrigir margem lateral
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('Meu Planner — Bruna V10.2','Meu Planner — Bruna V10.3')
+          s=s.replace('Versão 10.2 • Agenda de hoje no topo.','Versão 10.3 • Margem lateral corrigida.')
+          s=s.replace("version:'10.2'","version:'10.3'")
+          css='''
+/* Ajuste 10.3: impede corte lateral no iPhone */
+html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative}
+body{overscroll-behavior-x:none}
+main{width:100%;max-width:780px;margin:0 auto;padding-left:calc(22px + env(safe-area-inset-left));padding-right:calc(18px + env(safe-area-inset-right));overflow:hidden}
+.topbar,.hero,.todayPanel,.grid,.sectionHead,.filter,.item,.toolsBox{max-width:100%}
+.filter{padding-left:2px;padding-right:2px}
+@supports(padding:max(0px)){main{padding-left:max(22px,calc(env(safe-area-inset-left) + 22px));padding-right:max(18px,calc(env(safe-area-inset-right) + 18px))}}
+'''
+          if 'Ajuste 10.3: impede corte lateral no iPhone' not in s:
+              s=s.replace('\n</style>','\n'+css+'\n</style>',1)
+          js='''
+<script>
+(function(){function fixX(){if(window.scrollX)window.scrollTo(0,window.scrollY)}window.addEventListener('load',function(){setTimeout(fixX,80);setTimeout(fixX,400)});window.addEventListener('resize',fixX);document.addEventListener('touchend',fixX,{passive:true});})();
+</script>
+'''
+          if 'function fixX(){if(window.scrollX)' not in s:
+              s=s.replace('\n</body>',js+'\n</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          rm -f trigger-margin-10-3.txt .github/workflows/fix-margin-10-3.yml .github/workflows/agenda-hoje-patch.yml
+          git config user.name github-actions[bot]
+          git config user.email actions@github.com
+          git add index.html trigger-margin-10-3.txt .github/workflows/fix-margin-10-3.yml .github/workflows/agenda-hoje-patch.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'Versão 10.3: corrigir margem lateral'
+            git push
+          fi
