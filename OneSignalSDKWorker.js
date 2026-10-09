@@ -1,7 +1,7 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 11.0 — topo com mais respiro no iPhone.
-// Mantém tarefas acima das rotinas, alertas por horário, margem corrigida, pastas compactas e seções recolhíveis.
+// Versão 11.1 — botão Feito direto na Agenda de hoje.
+// Mantém topo com respiro, tarefas acima das rotinas, alertas por horário e seções recolhíveis.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
@@ -11,7 +11,7 @@ self.addEventListener('activate', event => {
 });
 
 const PLANNER_PATCH_CSS = `
-/* Ajuste 11.0: topo com respiro + tarefas acima das rotinas */
+/* Ajuste 11.1: botão Feito na Agenda de hoje + topo com respiro */
 html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
 body{overscroll-behavior-x:none}
 main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding-bottom:24px!important;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
@@ -21,6 +21,12 @@ main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding
 .topActions{padding-top:2px!important;flex:none!important}.roundBtn{width:38px!important;height:38px!important}
 .hero{margin-top:4px!important}.heroTitle{line-height:1.2!important}
 .topbar,.hero,.todayPanel,.grid,.sectionHead,.filter,.item,.toolsBox,.historyBox,.routineBox{max-width:100%}
+.todayMini{position:relative;display:flex!important;align-items:center!important;gap:9px!important}
+.todayMiniMain{flex:1;min-width:0}
+.todayMiniActions{display:flex;align-items:center;gap:6px;flex:none}
+.todayDoneBtn{border:0;background:var(--rose);color:var(--wine);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 4px 10px rgba(138,18,56,.08)}
+.todayDoneBtn:active{transform:scale(.96)}
+.todayMini.routine .todayDoneBtn{display:none}
 .filter{gap:7px!important;padding:2px 2px 6px!important;scroll-padding-left:2px}
 .chip{font-size:14px!important;padding:8px 13px!important;border-radius:999px!important;min-height:38px!important;box-shadow:0 4px 12px rgba(82,44,37,.04)}
 .chip.active{box-shadow:0 8px 16px rgba(138,18,56,.16)!important}
@@ -36,7 +42,7 @@ main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding
 .historyCount,.routineCountMini{background:var(--rose);color:var(--wine);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900;white-space:nowrap}
 .historyBox #doneList,.routineBox #routineList{margin-top:10px}
 .routineBox .empty,.historyBox .empty{margin-top:10px}
-@media(max-width:390px){main{padding-top:30px!important;padding-left:20px!important;padding-right:16px!important}.hello h1{font-size:24px!important}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}}
+@media(max-width:390px){main{padding-top:30px!important;padding-left:20px!important;padding-right:16px!important}.hello h1{font-size:24px!important}.todayMini{gap:7px!important}.todayMiniTime{min-width:44px!important}.todayDoneBtn{font-size:11.5px!important;padding:6px 9px!important}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}}
 @supports(padding:max(0px)){main{padding-top:max(28px,calc(env(safe-area-inset-top) + 10px))!important;padding-left:max(22px,calc(env(safe-area-inset-left) + 22px))!important;padding-right:max(18px,calc(env(safe-area-inset-right) + 18px))!important}}
 `;
 
@@ -59,15 +65,15 @@ const PLANNER_PATCH_JS = `
   function fixExistingTimeOnlyTasks(){
     try{
       var changed=false;
-      if(!Array.isArray(window.tasks)) return;
-      window.tasks.forEach(function(t){
+      if(typeof tasks==='undefined' || !Array.isArray(tasks)) return;
+      tasks.forEach(function(t){
         if(t && t.time && !t.date && !t.recurrence && !t.done){
           t.date=dateKeyForTimeOnlyRuntime(t.time);
           changed=true;
         }
       });
       if(changed){
-        localStorage.setItem('brunaTasks', JSON.stringify(window.tasks));
+        localStorage.setItem('brunaTasks', JSON.stringify(tasks));
         if(typeof render==='function') render();
         if(typeof schedulePendingReminders==='function') schedulePendingReminders(false);
       }
@@ -147,6 +153,52 @@ const PLANNER_PATCH_JS = `
     setupHistoryAccordion();
     updateFoldCounts();
   }
+  function todayItemsWithIds(){
+    var today=dateKey(new Date()),list=[];
+    tasks.forEach(function(t){
+      if(!isActive(t)) return;
+      if(isRoutine(t)){
+        if(routineOccursToday(t)){
+          var rtime=t.time||'08:00';
+          list.push({id:t.id,text:t.text,time:rtime,cat:t.cat,routine:true,stamp:todayAt(rtime).getTime()});
+        }
+        return;
+      }
+      var ev=eventDueAt(t);
+      if(t.date===today || (ev && dateKey(ev)===today)){
+        var time=t.time || (ev ? pad(ev.getHours())+':'+pad(ev.getMinutes()) : 'Hoje');
+        list.push({id:t.id,text:t.text,time:time,cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()});
+      }
+    });
+    return list.sort(function(a,b){return a.stamp-b.stamp}).slice(0,6);
+  }
+  window.completeAgendaItem=function(id){
+    try{
+      if(typeof toggle==='function') toggle(id);
+    }catch(e){ console.log('complete agenda item:', e); }
+  };
+  function enhanceTodayAgenda(){
+    try{
+      if(typeof renderTodayAgenda!=='function' || typeof tasks==='undefined') return;
+      if(window.__todayDonePatchApplied) return;
+      window.__todayDonePatchApplied=true;
+      renderTodayAgenda=function(){
+        var list=document.getElementById('todayAgendaList'), label=document.getElementById('todayDateLabel');
+        if(!list) return;
+        if(label) label.textContent=agendaDateLabel();
+        var items=todayItemsWithIds();
+        if(!items.length){
+          list.innerHTML="<div class='todayEmpty'>Nada marcado para hoje. Ótimo respiro 🌿</div>";
+          return;
+        }
+        list.innerHTML=items.map(function(x){
+          var doneBtn=x.routine?'':"<button class='todayDoneBtn' onclick='completeAgendaItem("+x.id+")'>✓ Feito</button>";
+          return "<div class='todayMini "+(x.routine?'routine':'task')+"'><span class='todayMiniTime'>"+esc(x.time)+"</span><div class='todayMiniMain'><div class='todayMiniText'>"+esc(x.text)+"</div><div class='todayMiniCat'>"+(x.routine?'Rotina • ':'')+esc(catLabel(x.cat))+"</div></div><div class='todayMiniActions'>"+doneBtn+"</div></div>";
+        }).join('');
+      };
+      if(typeof render==='function') render();
+    }catch(e){ console.log('today done patch:', e); }
+  }
   function wrapRenderForAccordions(){
     if(window.__foldPatchWrapped){ setupAccordions(); return; }
     window.__foldPatchWrapped=true;
@@ -164,8 +216,10 @@ const PLANNER_PATCH_JS = `
   }
   window.addEventListener('load', function(){
     setTimeout(fixExistingTimeOnlyTasks,120);
-    setTimeout(wrapRenderForAccordions,180);
-    setTimeout(wrapRenderForAccordions,650);
+    setTimeout(enhanceTodayAgenda,160);
+    setTimeout(wrapRenderForAccordions,200);
+    setTimeout(enhanceTodayAgenda,520);
+    setTimeout(wrapRenderForAccordions,700);
     setTimeout(fixX,80); setTimeout(fixX,400); setTimeout(enhanceFilter,500);
   });
   window.addEventListener('resize', fixX);
@@ -175,12 +229,12 @@ const PLANNER_PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s = text;
-  s = s.replace(/Meu Planner — Bruna V10\.\d+/g, 'Meu Planner — Bruna V11.0');
-  s = s.replace(/Meu Planner — Bruna V11\.0/g, 'Meu Planner — Bruna V11.0');
-  s = s.replace(/Versão 10\.\d+ • [^<]+/g, 'Versão 11.0 • Topo com mais respiro.');
-  s = s.replace(/Versão 11\.0 • [^<]+/g, 'Versão 11.0 • Topo com mais respiro.');
-  s = s.replace(/version:'10\.\d+'/g, "version:'11.0'");
-  s = s.replace(/version:'11\.0'/g, "version:'11.0'");
+  s = s.replace(/Meu Planner — Bruna V10\.\d+/g, 'Meu Planner — Bruna V11.1');
+  s = s.replace(/Meu Planner — Bruna V11\.0/g, 'Meu Planner — Bruna V11.1');
+  s = s.replace(/Versão 10\.\d+ • [^<]+/g, 'Versão 11.1 • Botão Feito na agenda.');
+  s = s.replace(/Versão 11\.0 • [^<]+/g, 'Versão 11.1 • Botão Feito na agenda.');
+  s = s.replace(/version:'10\.\d+'/g, "version:'11.1'");
+  s = s.replace(/version:'11\.0'/g, "version:'11.1'");
 
   // Aceita agendamento quando houver horário, mesmo sem data escrita.
   s = s.replace(
@@ -204,10 +258,10 @@ function patchPlannerHtml(text){
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g, 'sendAt.getTime()<Date.now()+5000');
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g, 'sendAt.getTime()<Date.now()+5000');
 
-  if(!s.includes('Ajuste 11.0: topo com respiro + tarefas acima das rotinas')){
+  if(!s.includes('Ajuste 11.1: botão Feito na Agenda de hoje')){
     s = s.replace('\n</style>', '\n' + PLANNER_PATCH_CSS + '\n</style>');
   }
-  if(!s.includes('function setupSectionOrder()')){
+  if(!s.includes('function enhanceTodayAgenda()')){
     s = s.replace('\n</body>', PLANNER_PATCH_JS + '\n</body>');
   }
   return s;
