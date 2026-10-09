@@ -1,7 +1,7 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 10.4 — ajuste visual aplicado pelo service worker.
-// Mantém a tela presa na largura correta do celular e deixa as pastas mais compactas.
+// Versão 10.5 — ajuste visual e correção de alertas por horário.
+// Se a usuária escrever apenas um horário, o planner assume hoje quando ainda dá tempo.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
@@ -11,7 +11,7 @@ self.addEventListener('activate', event => {
 });
 
 const PLANNER_PATCH_CSS = `
-/* Ajuste 10.4: margem lateral + pastas compactas */
+/* Ajuste 10.5: margem lateral + pastas compactas */
 html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
 body{overscroll-behavior-x:none}
 main{width:100%;max-width:780px;margin:0 auto;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
@@ -33,7 +33,41 @@ const PLANNER_PATCH_JS = `
     var filter=document.getElementById('filters');
     if(filter && !filter.dataset.compactHint){ filter.dataset.compactHint='1'; filter.setAttribute('aria-label','Pastas — arraste para o lado para ver todas'); }
   }
-  window.addEventListener('load', function(){ setTimeout(fixX,80); setTimeout(fixX,400); setTimeout(enhanceFilter,500); });
+  function dateFromTime(time){
+    var d=new Date();
+    var p=String(time||'').split(':').map(Number);
+    d.setHours(p[0]||0,p[1]||0,0,0);
+    if(d.getTime() <= Date.now()+15000) d.setDate(d.getDate()+1);
+    return dateKey(d);
+  }
+  function patchTimeOnlyTasks(){
+    if(window.__plannerTimePatchApplied) return;
+    window.__plannerTimePatchApplied=true;
+    var oldMakeItem=window.makeItem;
+    if(typeof oldMakeItem==='function'){
+      window.makeItem=function(text,old){
+        var item=oldMakeItem(text,old);
+        if(item && item.time && !item.date && !item.recurrence){
+          item.date=dateFromTime(item.time);
+        }
+        return item;
+      };
+    }
+    var oldEventDueAt=window.eventDueAt;
+    if(typeof oldEventDueAt==='function'){
+      window.eventDueAt=function(t){
+        if(t && t.time && !t.date && !t.recurrence){
+          var d=new Date(dateFromTime(t.time)+'T'+t.time);
+          return d;
+        }
+        return oldEventDueAt(t);
+      };
+    }
+  }
+  window.addEventListener('load', function(){
+    patchTimeOnlyTasks();
+    setTimeout(fixX,80); setTimeout(fixX,400); setTimeout(enhanceFilter,500);
+  });
   window.addEventListener('resize', fixX);
   document.addEventListener('touchend', fixX, {passive:true});
 })();
@@ -41,13 +75,15 @@ const PLANNER_PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s = text;
-  s = s.replace(/Meu Planner — Bruna V10\.[0-3]/g, 'Meu Planner — Bruna V10.4');
-  s = s.replace(/Versão 10\.[0-3] • [^<]+/g, 'Versão 10.4 • Pastas compactas e alinhadas.');
-  s = s.replace(/version:'10\.[0-3]'/g, "version:'10.4'");
-  if(!s.includes('Ajuste 10.4: margem lateral + pastas compactas')){
+  s = s.replace(/Meu Planner — Bruna V10\.[0-4]/g, 'Meu Planner — Bruna V10.5');
+  s = s.replace(/Versão 10\.[0-4] • [^<]+/g, 'Versão 10.5 • Alertas por horário corrigidos.');
+  s = s.replace(/version:'10\.[0-4]'/g, "version:'10.5'");
+  s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g, 'sendAt.getTime()<Date.now()+5000');
+  s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g, 'sendAt.getTime()<Date.now()+5000');
+  if(!s.includes('Ajuste 10.5: margem lateral + pastas compactas')){
     s = s.replace('\n</style>', '\n' + PLANNER_PATCH_CSS + '\n</style>');
   }
-  if(!s.includes('function enhanceFilter()')){
+  if(!s.includes('function patchTimeOnlyTasks()')){
     s = s.replace('\n</body>', PLANNER_PATCH_JS + '\n</body>');
   }
   return s;
