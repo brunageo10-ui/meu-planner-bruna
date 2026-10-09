@@ -1,7 +1,7 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 10.9 — tarefas acima das rotinas.
-// Mantém alertas por horário, margem corrigida, pastas compactas e seções recolhíveis.
+// Versão 11.0 — topo com mais respiro no iPhone.
+// Mantém tarefas acima das rotinas, alertas por horário, margem corrigida, pastas compactas e seções recolhíveis.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
@@ -11,10 +11,15 @@ self.addEventListener('activate', event => {
 });
 
 const PLANNER_PATCH_CSS = `
-/* Ajuste 10.9: tarefas acima das rotinas + seções recolhíveis */
+/* Ajuste 11.0: topo com respiro + tarefas acima das rotinas */
 html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
 body{overscroll-behavior-x:none}
-main{width:100%;max-width:780px;margin:0 auto;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
+main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding-bottom:24px!important;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
+.topbar{max-width:100%;align-items:flex-start!important;margin:8px 0 12px!important;min-height:52px!important}
+.hello h1{font-size:25px!important;line-height:1.04!important;letter-spacing:-.55px!important;margin:0!important;white-space:nowrap!important}
+.hello p{font-size:13px!important;line-height:1.25!important;margin-top:5px!important}
+.topActions{padding-top:2px!important;flex:none!important}.roundBtn{width:38px!important;height:38px!important}
+.hero{margin-top:4px!important}.heroTitle{line-height:1.2!important}
 .topbar,.hero,.todayPanel,.grid,.sectionHead,.filter,.item,.toolsBox,.historyBox,.routineBox{max-width:100%}
 .filter{gap:7px!important;padding:2px 2px 6px!important;scroll-padding-left:2px}
 .chip{font-size:14px!important;padding:8px 13px!important;border-radius:999px!important;min-height:38px!important;box-shadow:0 4px 12px rgba(82,44,37,.04)}
@@ -31,8 +36,8 @@ main{width:100%;max-width:780px;margin:0 auto;padding-left:calc(22px + env(safe-
 .historyCount,.routineCountMini{background:var(--rose);color:var(--wine);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900;white-space:nowrap}
 .historyBox #doneList,.routineBox #routineList{margin-top:10px}
 .routineBox .empty,.historyBox .empty{margin-top:10px}
-@media(max-width:390px){main{padding-left:20px!important;padding-right:16px!important}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}}
-@supports(padding:max(0px)){main{padding-left:max(22px,calc(env(safe-area-inset-left) + 22px))!important;padding-right:max(18px,calc(env(safe-area-inset-right) + 18px))!important}}
+@media(max-width:390px){main{padding-top:30px!important;padding-left:20px!important;padding-right:16px!important}.hello h1{font-size:24px!important}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}}
+@supports(padding:max(0px)){main{padding-top:max(28px,calc(env(safe-area-inset-top) + 10px))!important;padding-left:max(22px,calc(env(safe-area-inset-left) + 22px))!important;padding-right:max(18px,calc(env(safe-area-inset-right) + 18px))!important}}
 `;
 
 const PLANNER_PATCH_JS = `
@@ -170,9 +175,12 @@ const PLANNER_PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s = text;
-  s = s.replace(/Meu Planner — Bruna V10\.[0-8]/g, 'Meu Planner — Bruna V10.9');
-  s = s.replace(/Versão 10\.[0-8] • [^<]+/g, 'Versão 10.9 • Tarefas antes das rotinas.');
-  s = s.replace(/version:'10\.[0-8]'/g, "version:'10.9'");
+  s = s.replace(/Meu Planner — Bruna V10\.\d+/g, 'Meu Planner — Bruna V11.0');
+  s = s.replace(/Meu Planner — Bruna V11\.0/g, 'Meu Planner — Bruna V11.0');
+  s = s.replace(/Versão 10\.\d+ • [^<]+/g, 'Versão 11.0 • Topo com mais respiro.');
+  s = s.replace(/Versão 11\.0 • [^<]+/g, 'Versão 11.0 • Topo com mais respiro.');
+  s = s.replace(/version:'10\.\d+'/g, "version:'11.0'");
+  s = s.replace(/version:'11\.0'/g, "version:'11.0'");
 
   // Aceita agendamento quando houver horário, mesmo sem data escrita.
   s = s.replace(
@@ -196,7 +204,7 @@ function patchPlannerHtml(text){
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g, 'sendAt.getTime()<Date.now()+5000');
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g, 'sendAt.getTime()<Date.now()+5000');
 
-  if(!s.includes('Ajuste 10.9: tarefas acima das rotinas + seções recolhíveis')){
+  if(!s.includes('Ajuste 11.0: topo com respiro + tarefas acima das rotinas')){
     s = s.replace('\n</style>', '\n' + PLANNER_PATCH_CSS + '\n</style>');
   }
   if(!s.includes('function setupSectionOrder()')){
