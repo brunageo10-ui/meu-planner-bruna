@@ -1,7 +1,7 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 10.8 — rotinas e histórico recolhíveis, ajuste visual e correção de alertas por horário.
-// Tarefas como "banho 19h34" assumem uma data; rotinas e histórico ficam recolhidos como Ferramentas.
+// Versão 10.9 — tarefas acima das rotinas.
+// Mantém alertas por horário, margem corrigida, pastas compactas e seções recolhíveis.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
@@ -11,7 +11,7 @@ self.addEventListener('activate', event => {
 });
 
 const PLANNER_PATCH_CSS = `
-/* Ajuste 10.8: margem lateral + pastas compactas + rotinas/histórico recolhíveis */
+/* Ajuste 10.9: tarefas acima das rotinas + seções recolhíveis */
 html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
 body{overscroll-behavior-x:none}
 main{width:100%;max-width:780px;margin:0 auto;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
@@ -108,6 +108,16 @@ const PLANNER_PATCH_JS = `
     box.appendChild(list);
     updateFoldCounts();
   }
+  function setupSectionOrder(){
+    var routineBox=document.getElementById('routineBox');
+    var taskList=document.getElementById('taskList');
+    if(!routineBox || !taskList || !routineBox.parentNode){ return; }
+    var taskHead=taskList.previousElementSibling;
+    while(taskHead && taskHead.nodeType!==1){ taskHead=taskHead.previousElementSibling; }
+    if(!taskHead || !taskHead.classList || !taskHead.classList.contains('sectionHead')){ return; }
+    routineBox.parentNode.insertBefore(taskHead, routineBox);
+    routineBox.parentNode.insertBefore(taskList, routineBox);
+  }
   function setupHistoryAccordion(){
     var list=document.getElementById('doneList');
     if(!list){ return; }
@@ -128,6 +138,7 @@ const PLANNER_PATCH_JS = `
   }
   function setupAccordions(){
     setupRoutineAccordion();
+    setupSectionOrder();
     setupHistoryAccordion();
     updateFoldCounts();
   }
@@ -159,9 +170,9 @@ const PLANNER_PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s = text;
-  s = s.replace(/Meu Planner — Bruna V10\.[0-7]/g, 'Meu Planner — Bruna V10.8');
-  s = s.replace(/Versão 10\.[0-7] • [^<]+/g, 'Versão 10.8 • Rotinas e histórico recolhíveis.');
-  s = s.replace(/version:'10\.[0-7]'/g, "version:'10.8'");
+  s = s.replace(/Meu Planner — Bruna V10\.[0-8]/g, 'Meu Planner — Bruna V10.9');
+  s = s.replace(/Versão 10\.[0-8] • [^<]+/g, 'Versão 10.9 • Tarefas antes das rotinas.');
+  s = s.replace(/version:'10\.[0-8]'/g, "version:'10.9'");
 
   // Aceita agendamento quando houver horário, mesmo sem data escrita.
   s = s.replace(
@@ -185,10 +196,10 @@ function patchPlannerHtml(text){
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g, 'sendAt.getTime()<Date.now()+5000');
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g, 'sendAt.getTime()<Date.now()+5000');
 
-  if(!s.includes('Ajuste 10.8: margem lateral + pastas compactas + rotinas/histórico recolhíveis')){
+  if(!s.includes('Ajuste 10.9: tarefas acima das rotinas + seções recolhíveis')){
     s = s.replace('\n</style>', '\n' + PLANNER_PATCH_CSS + '\n</style>');
   }
-  if(!s.includes('function setupRoutineAccordion()')){
+  if(!s.includes('function setupSectionOrder()')){
     s = s.replace('\n</body>', PLANNER_PATCH_JS + '\n</body>');
   }
   return s;
