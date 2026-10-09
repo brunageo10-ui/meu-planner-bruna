@@ -1,7 +1,7 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 10.5 — ajuste visual e correção de alertas por horário.
-// Se a usuária escrever apenas um horário, o planner assume hoje quando ainda dá tempo.
+// Versão 10.6 — correção direta de alertas por horário.
+// Tarefas como "banho 19h34" agora assumem uma data e entram no agendamento.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
@@ -11,7 +11,7 @@ self.addEventListener('activate', event => {
 });
 
 const PLANNER_PATCH_CSS = `
-/* Ajuste 10.5: margem lateral + pastas compactas */
+/* Ajuste 10.6: margem lateral + pastas compactas */
 html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
 body{overscroll-behavior-x:none}
 main{width:100%;max-width:780px;margin:0 auto;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
@@ -33,39 +33,33 @@ const PLANNER_PATCH_JS = `
     var filter=document.getElementById('filters');
     if(filter && !filter.dataset.compactHint){ filter.dataset.compactHint='1'; filter.setAttribute('aria-label','Pastas — arraste para o lado para ver todas'); }
   }
-  function dateFromTime(time){
+  function dateKeyForTimeOnlyRuntime(time){
     var d=new Date();
-    var p=String(time||'').split(':').map(Number);
+    var p=String(time||'08:00').split(':').map(Number);
     d.setHours(p[0]||0,p[1]||0,0,0);
-    if(d.getTime() <= Date.now()+15000) d.setDate(d.getDate()+1);
-    return dateKey(d);
+    if(d.getTime() <= Date.now()+5000) d.setDate(d.getDate()+1);
+    if(typeof dateKey==='function') return dateKey(d);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
-  function patchTimeOnlyTasks(){
-    if(window.__plannerTimePatchApplied) return;
-    window.__plannerTimePatchApplied=true;
-    var oldMakeItem=window.makeItem;
-    if(typeof oldMakeItem==='function'){
-      window.makeItem=function(text,old){
-        var item=oldMakeItem(text,old);
-        if(item && item.time && !item.date && !item.recurrence){
-          item.date=dateFromTime(item.time);
+  function fixExistingTimeOnlyTasks(){
+    try{
+      var changed=false;
+      if(!Array.isArray(window.tasks)) return;
+      window.tasks.forEach(function(t){
+        if(t && t.time && !t.date && !t.recurrence && !t.done){
+          t.date=dateKeyForTimeOnlyRuntime(t.time);
+          changed=true;
         }
-        return item;
-      };
-    }
-    var oldEventDueAt=window.eventDueAt;
-    if(typeof oldEventDueAt==='function'){
-      window.eventDueAt=function(t){
-        if(t && t.time && !t.date && !t.recurrence){
-          var d=new Date(dateFromTime(t.time)+'T'+t.time);
-          return d;
-        }
-        return oldEventDueAt(t);
-      };
-    }
+      });
+      if(changed){
+        localStorage.setItem('brunaTasks', JSON.stringify(window.tasks));
+        if(typeof render==='function') render();
+        if(typeof schedulePendingReminders==='function') schedulePendingReminders(false);
+      }
+    }catch(e){ console.log('fix time-only tasks:', e); }
   }
   window.addEventListener('load', function(){
-    patchTimeOnlyTasks();
+    setTimeout(fixExistingTimeOnlyTasks,120);
     setTimeout(fixX,80); setTimeout(fixX,400); setTimeout(enhanceFilter,500);
   });
   window.addEventListener('resize', fixX);
@@ -75,15 +69,36 @@ const PLANNER_PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s = text;
-  s = s.replace(/Meu Planner — Bruna V10\.[0-4]/g, 'Meu Planner — Bruna V10.5');
-  s = s.replace(/Versão 10\.[0-4] • [^<]+/g, 'Versão 10.5 • Alertas por horário corrigidos.');
-  s = s.replace(/version:'10\.[0-4]'/g, "version:'10.5'");
+  s = s.replace(/Meu Planner — Bruna V10\.[0-5]/g, 'Meu Planner — Bruna V10.6');
+  s = s.replace(/Versão 10\.[0-5] • [^<]+/g, 'Versão 10.6 • Alertas por horário corrigidos.');
+  s = s.replace(/version:'10\.[0-5]'/g, "version:'10.6'");
+
+  // Aceita agendamento quando houver horário, mesmo sem data escrita.
+  s = s.replace(
+    "function shouldSchedule(t){return !t.paused&&!t.done&&(hasReminderIntent(t.text)||!!t.recurrence||!!(t.date&&t.time))}",
+    "function shouldSchedule(t){return !t.paused&&!t.done&&(hasReminderIntent(t.text)||!!t.recurrence||!!t.time||!!(t.date&&t.time))}"
+  );
+
+  // Cria data automaticamente para tarefas com horário e sem data.
+  if(!s.includes('function dateKeyForTimeOnly(time)')){
+    s = s.replace(
+      'function makeItem(text,old){',
+      "function dateKeyForTimeOnly(time){let d=new Date(),p=(time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+5000)d.setDate(d.getDate()+1);return dateKey(d)}\nfunction makeItem(text,old){"
+    );
+  }
+  s = s.replace(
+    "date:recurrence?'':parseDate(text),time,",
+    "date:recurrence?'':(parseDate(text)||(time?dateKeyForTimeOnly(time):'')),time,"
+  );
+
+  // Não rejeita lembrete criado poucos segundos antes do horário.
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g, 'sendAt.getTime()<Date.now()+5000');
   s = s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g, 'sendAt.getTime()<Date.now()+5000');
-  if(!s.includes('Ajuste 10.5: margem lateral + pastas compactas')){
+
+  if(!s.includes('Ajuste 10.6: margem lateral + pastas compactas')){
     s = s.replace('\n</style>', '\n' + PLANNER_PATCH_CSS + '\n</style>');
   }
-  if(!s.includes('function patchTimeOnlyTasks()')){
+  if(!s.includes('function fixExistingTimeOnlyTasks()')){
     s = s.replace('\n</body>', PLANNER_PATCH_JS + '\n</body>');
   }
   return s;
