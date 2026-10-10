@@ -1,108 +1,140 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 12.2 — estrela alinhada com o X.
-// Mantém agenda agrupada, busca, atrasadas, botão Feito e seções recolhíveis.
+// Versão 12.3 — estrela restaurada e alinhada.
+// Carrega a base estável da versão 12.2 e aplica um reforço visual para a estrela.
 self.addEventListener('install', event => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
-const PLANNER_PATCH_CSS = `
-/* Ajuste 12.2: estrela menor alinhada com o X */
-html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
-body{overscroll-behavior-x:none}
-main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding-bottom:24px!important;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
-.topbar{max-width:100%;align-items:flex-start!important;margin:8px 0 12px!important;min-height:52px!important}.hello h1{font-size:25px!important;line-height:1.04!important;letter-spacing:-.55px!important;margin:0!important;white-space:nowrap!important}.hello p{font-size:13px!important;line-height:1.25!important;margin-top:5px!important}.topActions{padding-top:2px!important;flex:none!important}.roundBtn{width:38px!important;height:38px!important}.hero{margin-top:4px!important}.heroTitle{line-height:1.2!important}
-.topbar,.hero,.todayPanel,.grid,.sectionHead,.filter,.item,.toolsBox,.historyBox,.routineBox,.searchPanel{max-width:100%}.grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}.stat{min-width:0!important}.stat span{display:block;line-height:1.05!important}
-#taskList .item{position:relative!important;padding-right:98px!important}.priorityBtn{position:absolute;right:64px;top:20px;z-index:20;border:0;background:#fff3c4;color:#9a6a00;border-radius:999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;box-shadow:0 5px 12px rgba(154,106,0,.14);line-height:1}.priorityBtn.on{background:#ffe08a;color:#7a4d00}.priorityBtn:active{transform:scale(.95)}.priorityTag{display:inline-flex;align-items:center;gap:4px;background:#fff3c4!important;color:#8a5b00!important;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:900}.priorityItem{border-color:#f3d990!important;box-shadow:0 12px 26px rgba(154,106,0,.10)!important}.priorityItem .itemText,.priorityItem h3{color:var(--wine)!important}
-.searchPanel{display:none;background:rgba(255,253,251,.96);border:1px solid var(--line);border-radius:22px;padding:14px;margin:12px 0 14px;box-shadow:var(--shadow2)}.searchPanel.open{display:block}.searchHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.searchHeader b{font-size:18px;color:var(--wine)}.searchClose{border:0;background:var(--rose);color:var(--wine);border-radius:999px;width:34px;height:34px;font-size:18px;font-weight:900}.searchInputWrap{display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--line);border-radius:16px;padding:10px 12px}.searchInputWrap span{color:var(--muted)}#realSearchInput{border:0!important;outline:0!important;width:100%!important;font-size:15px!important;background:transparent!important;color:var(--ink)!important;min-height:24px!important}.searchHelp{font-size:12.5px;color:var(--muted);margin:8px 2px 0;line-height:1.35}.searchResults{margin-top:10px}.searchEmpty{padding:12px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);font-size:13.5px;background:rgba(255,255,255,.56)}.searchResult{border:1px solid var(--line);border-radius:16px;background:#fff;padding:11px;margin-top:8px}.searchResultTitle{font-weight:900;color:var(--ink);font-size:15px;line-height:1.2}.searchMeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.searchTag{background:var(--rose);color:var(--wine);border-radius:999px;padding:5px 8px;font-size:12px;font-weight:800}.searchActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.searchActionBtn{border:0;background:var(--rose);color:var(--wine);border-radius:999px;padding:7px 10px;font-size:12.5px;font-weight:900}.searchActionBtn.star{background:#fff3c4;color:#8a5b00}
-.todayGroup{margin-top:10px}.todayGroup:first-child{margin-top:2px}.todayGroupTitle{display:flex;align-items:center;gap:6px;margin:8px 2px 7px;color:var(--wine);font-size:12.5px;font-weight:950}.todayGroupTitle span{background:var(--rose);border-radius:999px;padding:5px 9px}.todayMini{position:relative;display:flex!important;align-items:center!important;gap:9px!important}.todayMiniMain{flex:1;min-width:0}.todayMiniActions{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}.todayMiniText{line-height:1.15}.todayDoneBtn{border:0;background:var(--rose);color:var(--wine);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 4px 10px rgba(138,18,56,.08)}.todayDoneBtn:active{transform:scale(.96)}.todayMini.routine .todayDoneBtn{display:none}
-.todayLateTag,.overdueTag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:#ffe3e0;color:#a01838;font-weight:900;line-height:1;white-space:nowrap}.todayLateTag{padding:6px 9px;font-size:11.5px}.overdueTag{padding:7px 10px;font-size:13px;margin-left:4px}.overdueItem{border-color:#efc7c2!important;box-shadow:0 10px 24px rgba(160,24,56,.08)!important}
-.filter{gap:7px!important;padding:2px 2px 6px!important;scroll-padding-left:2px}.chip{font-size:14px!important;padding:8px 13px!important;border-radius:999px!important;min-height:38px!important;box-shadow:0 4px 12px rgba(82,44,37,.04)}.chip.active{box-shadow:0 8px 16px rgba(138,18,56,.16)!important}.sectionHead{margin-top:20px!important}.sectionTitle{min-width:0}.sectionTitle h2{white-space:nowrap}.miniBtn{padding:8px 11px!important;font-size:12.5px!important}
-.historyBox,.routineBox{margin:24px 0 10px;border-top:1px solid var(--line);padding-top:14px}.routineBox{margin-top:20px}.historyBox summary,.routineBox summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,253,251,.94);border:1px solid var(--line);border-radius:18px;padding:14px 15px;box-shadow:var(--shadow2);color:var(--wine);font-weight:900;font-size:18px;cursor:pointer}.historyBox summary::-webkit-details-marker,.routineBox summary::-webkit-details-marker{display:none}.historyBox summary b,.routineBox summary b{display:block;font-size:18px;line-height:1.05}.historyBox summary small,.routineBox summary small{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}.historyBox[open] summary small,.routineBox[open] summary small{color:var(--wine)}.historyCount,.routineCountMini{background:var(--rose);color:var(--wine);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900;white-space:nowrap}.historyBox #doneList,.routineBox #routineList{margin-top:10px}.routineBox .empty,.historyBox .empty{margin-top:10px}
-@media(max-width:390px){main{padding-top:30px!important;padding-left:20px!important;padding-right:16px!important}.hello h1{font-size:24px!important}.todayMini{gap:7px!important}.todayMiniTime{min-width:44px!important}.todayDoneBtn,.todayLateTag{font-size:11px!important;padding:6px 8px!important}#taskList .item{padding-right:90px!important}.priorityBtn{right:58px;top:18px;width:28px;height:28px;font-size:15px}.todayGroupTitle{font-size:12px}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}.searchHeader b{font-size:17px}.grid{gap:7px!important}.stat{font-size:11.5px!important}}
-@supports(padding:max(0px)){main{padding-top:max(28px,calc(env(safe-area-inset-top) + 10px))!important;padding-left:max(22px,calc(env(safe-area-inset-left) + 22px))!important;padding-right:max(18px,calc(env(safe-area-inset-right) + 18px))!important}}
+const BASE_PATCH_URL = "https://raw.githubusercontent.com/brunageo10-ui/meu-planner-bruna/deb48ace928150c48038c0d98669cc4c5e5bed1c/OneSignalSDKWorker.js";
+let cachedBasePatch = null;
+
+const EXTRA_CSS = `
+/* Ajuste 12.3: estrela restaurada, menor e alinhada ao X */
+#taskList .item{position:relative!important;padding-right:104px!important}
+#taskList .item .priorityBtn{position:absolute!important;right:56px!important;top:14px!important;z-index:30!important;width:32px!important;height:32px!important;border:0!important;border-radius:999px!important;background:#fff3c4!important;color:#9a6a00!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:16px!important;font-weight:900!important;line-height:1!important;box-shadow:0 5px 12px rgba(154,106,0,.16)!important;padding:0!important}
+#taskList .item .priorityBtn.on{background:#ffe08a!important;color:#7a4d00!important}
+#taskList .item .deleteBtn{right:12px!important;top:12px!important}
+#taskList .item .priorityTag{display:inline-flex!important;align-items:center!important;gap:4px!important;background:#fff3c4!important;color:#8a5b00!important;border-radius:999px!important;padding:7px 10px!important;font-size:13px!important;font-weight:900!important}
+#taskList .item.priorityItem{border-color:#f3d990!important;box-shadow:0 12px 26px rgba(154,106,0,.10)!important}
+#taskList .item.priorityItem .itemText,#taskList .item.priorityItem h3{color:var(--wine)!important}
+@media(max-width:390px){#taskList .item{padding-right:98px!important}#taskList .item .priorityBtn{right:52px!important;top:14px!important;width:30px!important;height:30px!important;font-size:15px!important}}
 `;
 
-const PLANNER_PATCH_JS = `
+const EXTRA_JS = `
 <script>
 (function(){
-  const VERSION='12.2';
-  function fixX(){ if(window.scrollX) window.scrollTo(0, window.scrollY); }
-  function allTasks(){ try{return (typeof tasks!=='undefined'&&Array.isArray(tasks))?tasks:[]}catch(e){return[]} }
-  function saveTasks(){ try{localStorage.setItem('brunaTasks',JSON.stringify(allTasks()));}catch(e){} }
-  function safeEsc(v){ try{return esc(String(v||''));}catch(e){return String(v||'').replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]})} }
-  function norm(v){ return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
-  function catName(c){ try{return catLabel(c)}catch(e){return c||'Sem pasta'} }
-  function dateLabel(v){ if(!v)return ''; try{var p=String(v).split('-'); if(p.length===3)return p[2]+'/'+p[1]+'/'+p[0];}catch(e){} return v; }
-  function isTask(t){ try{return t && !isRoutine(t);}catch(e){return t && !t.recurrence;} }
-  function setVersion(){ try{ var el=document.getElementById('versionLine'); if(el) el.textContent='Versão '+VERSION+' • Estrela alinhada.'; document.title='Meu Planner — Bruna V'+VERSION; }catch(e){} }
-  function dkTime(time){ var d=new Date(),p=String(time||'08:00').split(':').map(Number); d.setHours(p[0]||0,p[1]||0,0,0); if(d.getTime()<=Date.now()+5000)d.setDate(d.getDate()+1); return (typeof dateKey==='function')?dateKey(d):d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-  function fixExistingTimeOnlyTasks(){ try{ var changed=false; allTasks().forEach(function(t){ if(t&&t.time&&!t.date&&!t.recurrence&&!t.done){t.date=dkTime(t.time);changed=true;} }); if(changed){saveTasks(); if(typeof schedulePendingReminders==='function')schedulePendingReminders(false);} }catch(e){} }
-  function eventTime(t){try{return eventDueAt(t)}catch(e){ if(t&&t.date&&t.time)return new Date(t.date+'T'+t.time); return null; }}
-  function isLate(t){ if(!t||t.done||!isTask(t)||!isActive(t))return false; var ev=eventTime(t); return !!(ev&&ev.getTime()<Date.now()); }
-  function getIdFromCard(card){ var edit=card.querySelector('[onclick^="editItem("]'); if(edit){var m=String(edit.getAttribute('onclick')||'').match(/editItem\((\d+)\)/); if(m)return Number(m[1]);} var del=card.querySelector('[onclick^="del("]'); if(del){var m2=String(del.getAttribute('onclick')||'').match(/del\((\d+)\)/); if(m2)return Number(m2[1]);} var cb=card.querySelector('[onclick^="toggle("]'); if(cb){var m3=String(cb.getAttribute('onclick')||'').match(/toggle\((\d+)\)/); if(m3)return Number(m3[1]);} return null; }
-  function findTask(id){ return allTasks().find(function(t){return Number(t.id)===Number(id)}); }
-  window.togglePriority=function(id){ try{ var t=findTask(id); if(!t)return; t.priority=!t.priority; saveTasks(); if(typeof render==='function') render(); setTimeout(afterRender,40); }catch(e){} };
-  function decorateCards(){
+  const VERSION='12.3';
+  function norm(v){return String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim()}
+  function allTasks(){try{return Array.isArray(tasks)?tasks:[]}catch(e){return []}}
+  function saveTasks(){try{localStorage.setItem('brunaTasks',JSON.stringify(allTasks()))}catch(e){}}
+  function isTaskSafe(t){try{return t&&!isRoutine(t)}catch(e){return t&&!t.recurrence}}
+  function cardText(card){
+    var n=card.querySelector('.itemText')||card.querySelector('h3')||card.querySelector('.itemBody')||card;
+    return norm(n.textContent||'');
+  }
+  function getIdFromCard(card){
+    var nodes=card.querySelectorAll('[onclick]');
+    for(var i=0;i<nodes.length;i++){
+      var a=String(nodes[i].getAttribute('onclick')||'');
+      var m=a.match(/(?:editItem|del|toggle)\\((\\d+)\\)/);
+      if(m)return Number(m[1]);
+    }
+    return null;
+  }
+  function findTaskForCard(card){
+    var id=getIdFromCard(card);
+    var arr=allTasks();
+    if(id!==null){var byId=arr.find(function(t){return Number(t.id)===Number(id)}); if(byId)return byId;}
+    var ct=cardText(card);
+    if(!ct)return null;
+    return arr.find(function(t){return isTaskSafe(t)&&!t.done&&(ct.indexOf(norm(t.text).slice(0,24))>=0||norm(t.text).indexOf(ct.slice(0,24))>=0)})||null;
+  }
+  function setVersion(){
+    try{var el=document.getElementById('versionLine'); if(el)el.textContent='Versão '+VERSION+' • Estrela alinhada.'; document.title='Meu Planner — Bruna V'+VERSION;}catch(e){}
+  }
+  function addStars(){
     try{
+      setVersion();
       document.querySelectorAll('#taskList .item').forEach(function(card){
-        var id=getIdFromCard(card), t=findTask(id);
-        var old=card.querySelector('.priorityBtn'); if(old) old.remove();
-        var oldTag=card.querySelector('.priorityTag'); if(oldTag) oldTag.remove();
-        var oldLate=card.querySelector('.overdueTag'); if(oldLate) oldLate.remove();
-        card.classList.remove('priorityItem','overdueItem');
-        if(!t || !isTask(t) || t.done) return;
+        card.querySelectorAll('.priorityBtn').forEach(function(x){x.remove()});
+        card.querySelectorAll('.priorityTag').forEach(function(x){x.remove()});
+        card.classList.remove('priorityItem');
+        var t=findTaskForCard(card);
+        if(!t||!isTaskSafe(t)||t.done)return;
         var btn=document.createElement('button');
+        btn.type='button';
         btn.className='priorityBtn'+(t.priority?' on':'');
-        btn.type='button'; btn.title=t.priority?'Remover prioridade':'Marcar prioridade';
-        btn.textContent=t.priority?'⭐':'☆'; btn.setAttribute('onclick','togglePriority('+id+')');
+        btn.textContent=t.priority?'⭐':'☆';
+        btn.title=t.priority?'Remover prioridade':'Marcar prioridade';
+        btn.addEventListener('click',function(ev){
+          ev.preventDefault(); ev.stopPropagation();
+          t.priority=!t.priority;
+          saveTasks();
+          try{if(typeof render==='function')render()}catch(e){}
+          setTimeout(addStars,80);
+          setTimeout(addStars,350);
+        });
         card.appendChild(btn);
         var meta=card.querySelector('.meta');
-        if(t.priority){ card.classList.add('priorityItem'); if(meta){var tag=document.createElement('span'); tag.className='priorityTag'; tag.textContent='⭐ Prioridade'; meta.appendChild(tag);} }
-        if(isLate(t)){ card.classList.add('overdueItem'); if(meta){var late=document.createElement('span'); late.className='overdueTag'; late.textContent='⚠️ Atrasada'; meta.appendChild(late);} }
+        if(t.priority){
+          card.classList.add('priorityItem');
+          if(meta){var tag=document.createElement('span'); tag.className='priorityTag'; tag.textContent='⭐ Prioridade'; meta.appendChild(tag);}
+        }
       });
     }catch(e){}
   }
-  function sortTaskCards(){ try{ var list=document.getElementById('taskList'); if(!list) return; var cards=Array.from(list.children).filter(function(x){return x.nodeType===1}); cards.sort(function(a,b){var ta=findTask(getIdFromCard(a)),tb=findTask(getIdFromCard(b)); return (tb&&tb.priority?1:0)-(ta&&ta.priority?1:0);}); cards.forEach(function(c){list.appendChild(c)}); }catch(e){} }
-  function routineCount(){try{return allTasks().filter(function(t){return isRoutine(t)&&isActive(t)}).length}catch(e){return document.querySelectorAll('#routineList .routineItem').length}}
-  function historyDoneCount(){try{return allTasks().filter(function(t){return isTask(t)&&t.done}).length}catch(e){return document.querySelectorAll('#doneList .historyItem').length}}
-  function updateFoldCounts(){var r=document.getElementById('routineCountMini'),h=document.getElementById('historyCount'); if(r)r.textContent=String(routineCount()); if(h)h.textContent=String(historyDoneCount());}
-  function setupRoutineAccordion(){var list=document.getElementById('routineList'); if(!list)return; if(list.closest&&list.closest('.routineBox')){updateFoldCounts();return;} var head=list.previousElementSibling; while(head&&head.nodeType!==1)head=head.previousElementSibling; if(!head||!head.classList||!head.classList.contains('sectionHead'))return; var box=document.createElement('details'); box.className='routineBox'; box.id='routineBox'; var sum=document.createElement('summary'); sum.innerHTML='<span><b>🔁 Minhas rotinas</b><small>Toque para abrir</small></span><span class="routineCountMini" id="routineCountMini">0</span>'; head.parentNode.insertBefore(box,head); head.remove(); box.appendChild(sum); box.appendChild(list); updateFoldCounts();}
-  function setupHistoryAccordion(){var list=document.getElementById('doneList'); if(!list)return; if(list.closest&&list.closest('.historyBox')){updateFoldCounts();return;} var head=list.previousElementSibling; while(head&&head.nodeType!==1)head=head.previousElementSibling; if(!head||!head.classList||!head.classList.contains('sectionHead'))return; var box=document.createElement('details'); box.className='historyBox'; box.id='historyBox'; var sum=document.createElement('summary'); sum.innerHTML='<span><b>🕘 Histórico</b><small>Toque para abrir</small></span><span class="historyCount" id="historyCount">0</span>'; head.parentNode.insertBefore(box,head); head.remove(); box.appendChild(sum); box.appendChild(list); updateFoldCounts();}
-  function putTasksBeforeRoutines(){ try{var tl=document.getElementById('taskList'); if(!tl)return; var th=tl.previousElementSibling; while(th&&th.nodeType!==1) th=th.previousElementSibling; if(!th||!th.classList||!th.classList.contains('sectionHead')) return; var rb=document.getElementById('routineBox')||document.getElementById('routineList'); if(!rb||!rb.parentNode)return; rb.parentNode.insertBefore(th,rb); rb.parentNode.insertBefore(tl,rb);}catch(e){} }
-  function agendaItems(){var today=dateKey(new Date()),out=[]; allTasks().forEach(function(t){ if(!isActive(t))return; if(!isTask(t)){ if(routineOccursToday(t)){var rt=t.time||'08:00'; out.push({id:t.id,text:t.text,time:rt,cat:t.cat,routine:true,late:false,priority:false,stamp:todayAt(rt).getTime()});} return; } var ev=eventTime(t); var late=isLate(t); if(t.date===today||(ev&&dateKey(ev)===today)||late){var tm=t.time||(ev?pad(ev.getHours())+':'+pad(ev.getMinutes()):'Hoje'); out.push({id:t.id,text:t.text,time:tm,cat:t.cat,routine:false,late:late,priority:!!t.priority,stamp:ev?ev.getTime():todayAt('23:59').getTime()});} }); return out.sort(function(a,b){return (b.priority?1:0)-(a.priority?1:0)||a.stamp-b.stamp}).slice(0,8);}
-  function itemHtml(x){var late=x.late?'<span class="todayLateTag">⚠️ Atrasada</span>':''; var pr=x.priority?'<span class="priorityTag">⭐ Prioridade</span>':''; var btn=x.routine?'':'<button class="todayDoneBtn" onclick="completeAgendaItem('+x.id+')">✓ Feito</button>'; return '<div class="todayMini '+(x.routine?'routine':'task')+(x.late?' overdueItem':'')+(x.priority?' priorityItem':'')+'"><span class="todayMiniTime">'+safeEsc(x.time)+'</span><div class="todayMiniMain"><div class="todayMiniText">'+safeEsc(x.text)+'</div><div class="todayMiniCat">'+(x.routine?'Rotina • ':'')+safeEsc(catName(x.cat))+'</div></div><div class="todayMiniActions">'+pr+late+btn+'</div></div>';}
-  function groupHtml(title,items){ if(!items.length)return ''; return '<div class="todayGroup"><div class="todayGroupTitle"><span>'+title+'</span></div>'+items.map(itemHtml).join('')+'</div>'; }
-  window.completeAgendaItem=function(id){try{if(typeof toggle==='function')toggle(id);}catch(e){}};
-  function applyTodayAgenda(){ try{ renderTodayAgenda=function(){var list=document.getElementById('todayAgendaList'),label=document.getElementById('todayDateLabel'); if(!list)return; if(label && typeof agendaDateLabel==='function')label.textContent=agendaDateLabel(); var items=agendaItems(); if(!items.length){list.innerHTML='<div class="todayEmpty">Nada marcado para hoje. Ótimo respiro 🌿</div>'; return;} var late=items.filter(function(x){return x.late&&!x.routine}); var upcoming=items.filter(function(x){return !x.late&&!x.routine}); var routines=items.filter(function(x){return x.routine}); list.innerHTML=groupHtml('⚠️ Atrasadas',late)+groupHtml('⏰ Próximas tarefas',upcoming)+groupHtml('🔁 Rotinas de hoje',routines);}; }catch(e){} }
-  function setupSearch(){try{var main=document.querySelector('main'); if(!main)return; var panel=document.getElementById('realSearchPanel'); if(!panel){panel=document.createElement('section'); panel.id='realSearchPanel'; panel.className='searchPanel'; panel.innerHTML='<div class="searchHeader"><b>🔎 Buscar tarefas</b><button class="searchClose" id="realSearchClose">×</button></div><div class="searchInputWrap"><span>⌕</span><input id="realSearchInput" placeholder="Digite: prova, vinho, boleto, tour..." autocomplete="off"></div><div class="searchHelp">Procura em tarefas, rotinas, histórico e pastas.</div><div class="searchResults" id="realSearchResults"><div class="searchEmpty">Digite uma palavra para buscar.</div></div>'; var today=document.querySelector('.todayPanel'); main.insertBefore(panel,today||main.children[1]);} var input=document.getElementById('realSearchInput'),results=document.getElementById('realSearchResults'),close=document.getElementById('realSearchClose'); function renderSearch(){var q=norm(input.value); if(!q){results.innerHTML='<div class="searchEmpty">Digite uma palavra para buscar.</div>';return;} var found=allTasks().filter(function(t){var hay=norm([t.text,catName(t.cat),t.sub,t.date,t.time,t.recurrence,t.done?'histórico':'pendente',t.priority?'prioridade':''].join(' ')); return hay.indexOf(q)>=0;}).slice(0,20); if(!found.length){results.innerHTML='<div class="searchEmpty">Nada encontrado.</div>';return;} results.innerHTML=found.map(function(t){var tags=['📁 '+catName(t.cat)]; if(t.sub)tags.push(t.sub); if(t.date)tags.push('📅 '+dateLabel(t.date)); if(t.time)tags.push('🕘 '+t.time); if(t.done)tags.push('Histórico'); if(t.priority)tags.push('⭐ Prioridade'); var act='<button class="searchActionBtn" onclick="editItem('+t.id+')">✎ Editar</button>'; if(isTask(t)){act+='<button class="searchActionBtn star" onclick="togglePriority('+t.id+')">'+(t.priority?'Remover ⭐':'Marcar ⭐')+'</button>';} if(isTask(t)&&!t.done)act+='<button class="searchActionBtn" onclick="toggle('+t.id+')">✓ Feito</button>'; if(isTask(t)&&t.done)act+='<button class="searchActionBtn" onclick="toggle('+t.id+')">↩ Reabrir</button>'; return '<div class="searchResult"><div class="searchResultTitle">'+safeEsc(t.text)+'</div><div class="searchMeta">'+tags.map(function(x){return '<span class="searchTag">'+safeEsc(x)+'</span>';}).join('')+'</div><div class="searchActions">'+act+'</div></div>';}).join('');} input.oninput=renderSearch; close.onclick=function(){panel.classList.remove('open')}; document.querySelectorAll('.roundBtn').forEach(function(b){if(String(b.textContent||'').includes('⌕')||String(b.textContent||'').includes('🔎')){b.onclick=function(){panel.classList.add('open'); setTimeout(function(){input.focus(); renderSearch();},80);};}}); window.openSearch=function(){panel.classList.add('open'); setTimeout(function(){input.focus(); renderSearch();},80);};}catch(e){}}
-  function afterRender(){ setVersion(); setupRoutineAccordion(); setupHistoryAccordion(); putTasksBeforeRoutines(); updateFoldCounts(); sortTaskCards(); decorateCards(); try{if(typeof renderTodayAgenda==='function')renderTodayAgenda();}catch(e){} }
-  function wrapRender(){ if(window.__v122Wrapped)return; window.__v122Wrapped=true; var old=null; try{old=window.render||(typeof render==='function'?render:null);}catch(e){} if(typeof old==='function'){ window.render=function(){var r=old.apply(this,arguments); setTimeout(afterRender,0); return r;}; try{render=window.render;}catch(e){} } }
-  window.addEventListener('load',function(){ setVersion(); fixExistingTimeOnlyTasks(); applyTodayAgenda(); setupSearch(); wrapRender(); if(typeof render==='function')render(); setTimeout(afterRender,120); setTimeout(afterRender,600); setInterval(afterRender,30000); setTimeout(fixX,80); setTimeout(fixX,400); });
-  window.addEventListener('resize',fixX); document.addEventListener('touchend',fixX,{passive:true});
+  function start(){
+    setVersion(); addStars();
+    setTimeout(addStars,150); setTimeout(addStars,700); setTimeout(addStars,1500);
+    setInterval(addStars,2500);
+    try{new MutationObserver(function(){setTimeout(addStars,60)}).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  }
+  if(document.readyState==='loading')window.addEventListener('load',start); else start();
 })();
 <\/script>`;
 
-function patchPlannerHtml(text){
+async function getBasePatch(){
+  if(cachedBasePatch)return cachedBasePatch;
+  const text = await fetch(BASE_PATCH_URL,{cache:'no-store'}).then(r=>r.text());
+  const cssMatch = text.match(/const PLANNER_PATCH_CSS = `([\s\S]*?)`;\n\nconst PLANNER_PATCH_JS = `/);
+  const jsMatch = text.match(/const PLANNER_PATCH_JS = `([\s\S]*?)`;\n\nfunction patchPlannerHtml/);
+  cachedBasePatch = {css: cssMatch ? cssMatch[1] : '', js: jsMatch ? jsMatch[1] : ''};
+  return cachedBasePatch;
+}
+
+function injectBeforeClose(source, closeTag, addition){
+  if(source.includes(addition.slice(0,60)))return source;
+  return source.replace('\n'+closeTag, '\n'+addition+'\n'+closeTag);
+}
+
+async function patchPlannerHtml(text){
+  const base = await getBasePatch();
   let s=text;
-  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V12.2');
-  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 12.2 • Estrela alinhada.');
-  s=s.replace(/version:'\d+\.\d+'/g,"version:'12.2'");
+  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V12.3');
+  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 12.3 • Estrela alinhada.');
+  s=s.replace(/version:'\d+\.\d+'/g,"version:'12.3'");
   s=s.replace(/function shouldSchedule\(t\)\{[^}]+\}/,"function shouldSchedule(t){return !t.paused&&!t.done&&(hasReminderIntent(t.text)||!!t.recurrence||!!t.time||!!(t.date&&t.time))}");
-  if(!s.includes('function dateKeyForTimeOnly(time)')){s=s.replace('function makeItem(text,old){',"function dateKeyForTimeOnly(time){let d=new Date(),p=(time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+5000)d.setDate(d.getDate()+1);return dateKey(d)}\nfunction makeItem(text,old){");}
+  if(!s.includes('function dateKeyForTimeOnly(time)')){
+    s=s.replace('function makeItem(text,old){',"function dateKeyForTimeOnly(time){let d=new Date(),p=(time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+5000)d.setDate(d.getDate()+1);return dateKey(d)}\nfunction makeItem(text,old){");
+  }
   s=s.replace("date:recurrence?'':parseDate(text),time,","date:recurrence?'':(parseDate(text)||(time?dateKeyForTimeOnly(time):'')),time,");
   s=s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g,'sendAt.getTime()<Date.now()+5000');
   s=s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g,'sendAt.getTime()<Date.now()+5000');
-  if(!s.includes('Ajuste 12.2: estrela menor alinhada com o X')){s=s.replace('\n</style>','\n'+PLANNER_PATCH_CSS+'\n</style>');}
-  if(!s.includes("const VERSION='12.2'")){s=s.replace('\n</body>',PLANNER_PATCH_JS+'\n</body>');}
+  if(base.css && !s.includes('Ajuste 12.2: estrela menor alinhada com o X')) s=injectBeforeClose(s,'</style>',base.css);
+  if(base.js && !s.includes("const VERSION='12.2'")) s=injectBeforeClose(s,'</body>',base.js);
+  if(!s.includes('Ajuste 12.3: estrela restaurada')) s=injectBeforeClose(s,'</style>',EXTRA_CSS);
+  if(!s.includes("const VERSION='12.3'")) s=injectBeforeClose(s,'</body>',EXTRA_JS);
   return s;
 }
 
 self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.mode!=='navigate'&&request.destination!=='document')return;
-  event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{
+  event.respondWith(fetch(request,{cache:'no-store'}).then(async response=>{
     const type=response.headers.get('content-type')||'';
     if(!type.includes('text/html'))return response;
-    return response.text().then(html=>new Response(patchPlannerHtml(html),{status:response.status,statusText:response.statusText,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}}));
+    const html=await response.text();
+    const patched=await patchPlannerHtml(html);
+    return new Response(patched,{status:response.status,statusText:response.statusText,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}});
   }).catch(()=>fetch(request)));
 });
