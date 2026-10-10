@@ -1,13 +1,13 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 13.4 — corrige botão Organizar no iPhone/Safari.
-// Mantém notificações controladas e reforça o clique do botão principal.
+// Versão 13.5 — corrige experiência do ditado no iPhone.
+// Tenta reconhecimento de voz quando disponível e orienta o microfone do teclado quando o iOS bloquear.
 self.addEventListener('install', event => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 const PATCH_CSS = `
 <style>
-/* V13.4: esconde o aviso automático em inglês do OneSignal */
+/* V13.5: notificações controladas + ditado claro no iPhone */
 #onesignal-slidedown-container,
 .onesignal-slidedown-container,
 .onesignal-slidedown-dialog,
@@ -16,19 +16,22 @@ const PATCH_CSS = `
 .onesignal-bell-launcher,
 [id*="onesignal-slidedown"],
 [class*="onesignal-slidedown"]{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-#add{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;pointer-events:auto!important}
+#add,#voice{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;pointer-events:auto!important}
+#micVisualPanel .micPulseIcon{animation:micPulse 1.25s infinite!important}
+@keyframes micPulse{0%{box-shadow:0 0 0 0 rgba(170,23,70,.24)}70%{box-shadow:0 0 0 14px rgba(170,23,70,0)}100%{box-shadow:0 0 0 0 rgba(170,23,70,0)}}
 </style>`;
 
 const PATCH_JS = `
 <script>
 (function(){
-  const VERSION='13.4';
+  const VERSION='13.5';
   let saving=false;
+  let currentRecognition=null;
   function setVersion(){
     try{
       const el=document.getElementById('versionLine');
-      if(el)el.textContent='Versão 13.4 • Botão organizar corrigido.';
-      document.title='Meu Planner — Bruna V13.4';
+      if(el)el.textContent='Versão 13.5 • Ditado corrigido.';
+      document.title='Meu Planner — Bruna V13.5';
       const voice=document.getElementById('voice');
       if(voice)voice.innerHTML='🎙️ Ditado';
     }catch(e){}
@@ -51,22 +54,63 @@ const PATCH_JS = `
       });
     }catch(e){}
   }
-  function showMicPanel(){
+  function showMicPanel(title, subtitle, pulsing){
     try{
       let panel=document.getElementById('micVisualPanel');
       if(!panel){
         panel=document.createElement('div');
         panel.id='micVisualPanel';
-        panel.innerHTML='<div style="width:58px;height:58px;border-radius:999px;background:#aa1746;color:white;display:grid;place-items:center;font-size:28px;box-shadow:0 0 0 10px rgba(170,23,70,.10);animation:micPulse 1.25s infinite">🎙️</div><div><b style="color:#8a1238;font-size:17px">Ouvindo...</b><br><span style="color:#7f7273;font-size:14px">Use o microfone do teclado do iPhone.</span></div>';
+        panel.innerHTML='<div class="micPulseIcon" id="micPulseIcon" style="width:58px;height:58px;border-radius:999px;background:#aa1746;color:white;display:grid;place-items:center;font-size:28px;box-shadow:0 0 0 10px rgba(170,23,70,.10)">🎙️</div><div><b id="micPanelTitle" style="color:#8a1238;font-size:17px">Ditado</b><br><span id="micPanelSub" style="color:#7f7273;font-size:14px">Use o microfone do teclado do iPhone.</span></div>';
         panel.style.cssText='display:flex;align-items:center;gap:14px;border:1px solid #f1c9d6;background:#fffdfb;border-radius:20px;padding:14px 16px;margin:12px 0;box-shadow:0 9px 22px rgba(82,44,37,.07)';
-        const style=document.createElement('style');
-        style.textContent='@keyframes micPulse{0%{box-shadow:0 0 0 0 rgba(170,23,70,.24)}70%{box-shadow:0 0 0 14px rgba(170,23,70,0)}100%{box-shadow:0 0 0 0 rgba(170,23,70,0)}}';
-        document.head.appendChild(style);
         const actions=document.querySelector('.actions');
         if(actions&&actions.parentNode)actions.parentNode.insertBefore(panel,actions);
       }
       panel.style.display='flex';
+      const t=document.getElementById('micPanelTitle'), s=document.getElementById('micPanelSub'), i=document.getElementById('micPulseIcon');
+      if(t)t.textContent=title||'Ditado';
+      if(s)s.textContent=subtitle||'Use o microfone do teclado do iPhone.';
+      if(i){if(pulsing)i.classList.add('micPulseIcon');else i.classList.remove('micPulseIcon')}
     }catch(e){}
+  }
+  function showKeyboardFallback(){
+    const input=document.getElementById('input');
+    showMicPanel('Microfone do teclado', 'Toque no microfone do teclado do iPhone e fale sua tarefa.', false);
+    try{input.focus();input.setSelectionRange(input.value.length,input.value.length)}catch(e){}
+    try{toast('🎙️ Toque no microfone do teclado do iPhone.')}catch(e){}
+  }
+  function tryBrowserSpeech(){
+    const input=document.getElementById('input');
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){showKeyboardFallback();return;}
+    try{
+      if(currentRecognition){try{currentRecognition.stop()}catch(e){}}
+      const rec=new SR();
+      currentRecognition=rec;
+      let gotText=false;
+      rec.lang='pt-BR';
+      rec.interimResults=false;
+      rec.maxAlternatives=1;
+      rec.onstart=function(){showMicPanel('Ouvindo de verdade...', 'Pode falar agora. O texto aparecerá no campo.', true)};
+      rec.onresult=function(ev){
+        gotText=true;
+        let txt='';
+        try{txt=ev.results[0][0].transcript||''}catch(e){}
+        if(txt){
+          const before=(input.value||'').trim();
+          input.value=before?(before+' '+txt):txt;
+          showMicPanel('Fala captada ✅', 'Agora toque em Organizar automaticamente.', false);
+          try{toast('✅ Fala captada.')}catch(e){}
+        }else{
+          showKeyboardFallback();
+        }
+      };
+      rec.onerror=function(){showKeyboardFallback()};
+      rec.onend=function(){if(!gotText){showKeyboardFallback()}};
+      showMicPanel('Pedindo acesso ao microfone...', 'Se o iPhone bloquear, use o microfone do teclado.', true);
+      rec.start();
+    }catch(e){
+      showKeyboardFallback();
+    }
   }
   function setupVoice(){
     try{
@@ -75,10 +119,9 @@ const PATCH_JS = `
       voice.innerHTML='🎙️ Ditado';
       voice.onclick=function(ev){
         try{ev.preventDefault();ev.stopPropagation();}catch(e){}
-        showMicPanel();
         input.focus();
         try{input.setSelectionRange(input.value.length,input.value.length)}catch(e){}
-        try{toast('🎙️ Toque no microfone do teclado e fale sua tarefa.')}catch(e){}
+        tryBrowserSpeech();
         return false;
       };
     }catch(e){}
@@ -124,7 +167,7 @@ const PATCH_JS = `
     setTimeout(hideOneSignalEnglishPrompt,300);
     setTimeout(hideOneSignalEnglishPrompt,1000);
     setTimeout(function(){setVersion();setupVoice();setupAddButton();},1200);
-    try{new MutationObserver(function(){hideOneSignalEnglishPrompt();setupAddButton();}).observe(document.body,{childList:true,subtree:true});}catch(e){}
+    try{new MutationObserver(function(){hideOneSignalEnglishPrompt();setupAddButton();setupVoice();}).observe(document.body,{childList:true,subtree:true});}catch(e){}
   }
   if(document.readyState==='loading')window.addEventListener('load',start);else start();
 })();
@@ -132,10 +175,11 @@ const PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s=text;
-  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V13.4');
-  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 13.4 • Botão organizar corrigido.');
-  if(!s.includes('V13.4: esconde o aviso automático em inglês'))s=s.replace('\n</style>','\n'+PATCH_CSS+'\n</style>');
-  if(!s.includes("const VERSION='13.4'"))s=s.replace('\n</body>','\n'+PATCH_JS+'\n</body>');
+  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V13.5');
+  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 13.5 • Ditado corrigido.');
+  s=s.replace(/const VERSION='\d+\.\d+'/g,"const VERSION='13.5'");
+  if(!s.includes('V13.5: notificações controladas + ditado claro'))s=s.replace('\n</style>','\n'+PATCH_CSS+'\n</style>');
+  if(!s.includes("const VERSION='13.5'"))s=s.replace('\n</body>','\n'+PATCH_JS+'\n</body>');
   return s;
 }
 
