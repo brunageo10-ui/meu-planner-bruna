@@ -1,12 +1,12 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 12.0 — restaura Minhas tarefas e estrela de prioridade.
+// Versão 12.1 — estrela menor e reposicionada.
 // Mantém agenda agrupada, busca, atrasadas, botão Feito e seções recolhíveis.
 self.addEventListener('install', event => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 const PLANNER_PATCH_CSS = `
-/* Ajuste 12.0: restaura tarefas + estrela robusta */
+/* Ajuste 12.1: estrela menor e fora do texto */
 html,body{width:100%;max-width:100%;overflow-x:hidden!important;position:relative;touch-action:pan-y}
 body{overscroll-behavior-x:none}
 main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding-bottom:24px!important;padding-left:calc(22px + env(safe-area-inset-left))!important;padding-right:calc(18px + env(safe-area-inset-right))!important;overflow:hidden}
@@ -15,7 +15,7 @@ main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding
 .topActions{padding-top:2px!important;flex:none!important}.roundBtn{width:38px!important;height:38px!important}.hero{margin-top:4px!important}.heroTitle{line-height:1.2!important}
 .topbar,.hero,.todayPanel,.grid,.sectionHead,.filter,.item,.toolsBox,.historyBox,.routineBox,.searchPanel{max-width:100%}
 .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}.stat{min-width:0!important}.stat span{display:block;line-height:1.05!important}
-.item{position:relative!important}.priorityBtn{position:absolute;right:54px;top:14px;z-index:20;border:0;background:#fff3c4;color:#9a6a00;border-radius:999px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 6px 14px rgba(154,106,0,.16);line-height:1}.priorityBtn.on{background:#ffe08a;color:#7a4d00}.priorityBtn:active{transform:scale(.95)}.priorityTag{display:inline-flex;align-items:center;gap:4px;background:#fff3c4!important;color:#8a5b00!important;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:900}.priorityItem{border-color:#f3d990!important;box-shadow:0 12px 26px rgba(154,106,0,.10)!important}.priorityItem .itemText,.priorityItem h3{color:var(--wine)!important}
+.item{position:relative!important}.item .itemText,.item h3,.item .taskTitle{padding-right:88px!important}.priorityBtn{position:absolute;right:60px;top:22px;z-index:20;border:0;background:#fff6d7;color:#9a6a00;border-radius:999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;box-shadow:0 4px 10px rgba(154,106,0,.10);line-height:1}.priorityBtn.on{background:#ffeaa6;color:#7a4d00}.priorityBtn:active{transform:scale(.95)}.priorityTag{display:inline-flex;align-items:center;gap:4px;background:#fff3c4!important;color:#8a5b00!important;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:900}.priorityItem{border-color:#f3d990!important;box-shadow:0 12px 26px rgba(154,106,0,.10)!important}.priorityItem .itemText,.priorityItem h3{color:var(--wine)!important}
 .searchPanel{display:none;background:rgba(255,253,251,.96);border:1px solid var(--line);border-radius:22px;padding:14px;margin:12px 0 14px;box-shadow:var(--shadow2)}.searchPanel.open{display:block}.searchHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.searchHeader b{font-size:18px;color:var(--wine)}.searchClose{border:0;background:var(--rose);color:var(--wine);border-radius:999px;width:34px;height:34px;font-size:18px;font-weight:900}.searchInputWrap{display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--line);border-radius:16px;padding:10px 12px}.searchInputWrap span{color:var(--muted)}#realSearchInput{border:0!important;outline:0!important;width:100%!important;font-size:15px!important;background:transparent!important;color:var(--ink)!important;min-height:24px!important}.searchHelp{font-size:12.5px;color:var(--muted);margin:8px 2px 0;line-height:1.35}.searchResults{margin-top:10px}.searchEmpty{padding:12px;border:1px dashed var(--line);border-radius:15px;color:var(--muted);font-size:13.5px;background:rgba(255,255,255,.56)}.searchResult{border:1px solid var(--line);border-radius:16px;background:#fff;padding:11px;margin-top:8px}.searchResultTitle{font-weight:900;color:var(--ink);font-size:15px;line-height:1.2}.searchMeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.searchTag{background:var(--rose);color:var(--wine);border-radius:999px;padding:5px 8px;font-size:12px;font-weight:800}.searchActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.searchActionBtn{border:0;background:var(--rose);color:var(--wine);border-radius:999px;padding:7px 10px;font-size:12.5px;font-weight:900}.searchActionBtn.star{background:#fff3c4;color:#8a5b00}
 .todayGroup{margin-top:10px}.todayGroup:first-child{margin-top:2px}.todayGroupTitle{display:flex;align-items:center;gap:6px;margin:8px 2px 7px;color:var(--wine);font-size:12.5px;font-weight:950}.todayGroupTitle span{background:var(--rose);border-radius:999px;padding:5px 9px}
 .todayMini{position:relative;display:flex!important;align-items:center!important;gap:9px!important}.todayMiniMain{flex:1;min-width:0}.todayMiniActions{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}.todayMiniText{line-height:1.15}.todayDoneBtn{border:0;background:var(--rose);color:var(--wine);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 4px 10px rgba(138,18,56,.08)}.todayDoneBtn:active{transform:scale(.96)}.todayMini.routine .todayDoneBtn{display:none}
@@ -23,14 +23,14 @@ main{width:100%;max-width:780px;margin:0 auto;padding-top:28px!important;padding
 .filter{gap:7px!important;padding:2px 2px 6px!important;scroll-padding-left:2px}.chip{font-size:14px!important;padding:8px 13px!important;border-radius:999px!important;min-height:38px!important;box-shadow:0 4px 12px rgba(82,44,37,.04)}.chip.active{box-shadow:0 8px 16px rgba(138,18,56,.16)!important}
 .sectionHead{margin-top:20px!important}.sectionTitle{min-width:0}.sectionTitle h2{white-space:nowrap}.miniBtn{padding:8px 11px!important;font-size:12.5px!important}
 .historyBox,.routineBox{margin:24px 0 10px;border-top:1px solid var(--line);padding-top:14px}.routineBox{margin-top:20px}.historyBox summary,.routineBox summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,253,251,.94);border:1px solid var(--line);border-radius:18px;padding:14px 15px;box-shadow:var(--shadow2);color:var(--wine);font-weight:900;font-size:18px;cursor:pointer}.historyBox summary::-webkit-details-marker,.routineBox summary::-webkit-details-marker{display:none}.historyBox summary b,.routineBox summary b{display:block;font-size:18px;line-height:1.05}.historyBox summary small,.routineBox summary small{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}.historyBox[open] summary small,.routineBox[open] summary small{color:var(--wine)}.historyCount,.routineCountMini{background:var(--rose);color:var(--wine);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900;white-space:nowrap}.historyBox #doneList,.routineBox #routineList{margin-top:10px}.routineBox .empty,.historyBox .empty{margin-top:10px}
-@media(max-width:390px){main{padding-top:30px!important;padding-left:20px!important;padding-right:16px!important}.hello h1{font-size:24px!important}.todayMini{gap:7px!important}.todayMiniTime{min-width:44px!important}.todayDoneBtn,.todayLateTag{font-size:11px!important;padding:6px 8px!important}.priorityBtn{right:50px;top:12px;width:35px;height:35px;font-size:18px}.todayGroupTitle{font-size:12px}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}.searchHeader b{font-size:17px}.grid{gap:7px!important}.stat{font-size:11.5px!important}}
+@media(max-width:390px){main{padding-top:30px!important;padding-left:20px!important;padding-right:16px!important}.hello h1{font-size:24px!important}.item .itemText,.item h3,.item .taskTitle{padding-right:82px!important}.todayMini{gap:7px!important}.todayMiniTime{min-width:44px!important}.todayDoneBtn,.todayLateTag{font-size:11px!important;padding:6px 8px!important}.priorityBtn{right:55px;top:20px;width:28px;height:28px;font-size:16px}.todayGroupTitle{font-size:12px}.chip{font-size:13.5px!important;padding:7px 11px!important}.sectionTitle h2{font-size:21px!important}.miniBtn{font-size:12px!important;padding:7px 10px!important}.historyBox summary,.routineBox summary{padding:13px 14px}.historyBox summary b,.routineBox summary b{font-size:17px}.searchHeader b{font-size:17px}.grid{gap:7px!important}.stat{font-size:11.5px!important}}
 @supports(padding:max(0px)){main{padding-top:max(28px,calc(env(safe-area-inset-top) + 10px))!important;padding-left:max(22px,calc(env(safe-area-inset-left) + 22px))!important;padding-right:max(18px,calc(env(safe-area-inset-right) + 18px))!important}}
 `;
 
 const PLANNER_PATCH_JS = `
 <script>
 (function(){
-  const VERSION='12.0';
+  const VERSION='12.1';
   function fixX(){ if(window.scrollX) window.scrollTo(0, window.scrollY); }
   function allTasks(){ try{return (typeof tasks!=='undefined'&&Array.isArray(tasks))?tasks:[]}catch(e){return[]} }
   function saveTasks(){ try{localStorage.setItem('brunaTasks',JSON.stringify(allTasks()));}catch(e){} }
@@ -39,7 +39,7 @@ const PLANNER_PATCH_JS = `
   function catName(c){ try{return catLabel(c)}catch(e){return c||'Sem pasta'} }
   function dateLabel(v){ if(!v)return ''; try{var p=String(v).split('-'); if(p.length===3)return p[2]+'/'+p[1]+'/'+p[0];}catch(e){} return v; }
   function isTask(t){ try{return t && !isRoutine(t);}catch(e){return t && !t.recurrence;} }
-  function setVersion(){ try{ var el=document.getElementById('versionLine'); if(el) el.textContent='Versão '+VERSION+' • Tarefas restauradas.'; document.title='Meu Planner — Bruna V'+VERSION; }catch(e){} }
+  function setVersion(){ try{ var el=document.getElementById('versionLine'); if(el) el.textContent='Versão '+VERSION+' • Estrela ajustada.'; document.title='Meu Planner — Bruna V'+VERSION; }catch(e){} }
   function dkTime(time){ var d=new Date(),p=String(time||'08:00').split(':').map(Number); d.setHours(p[0]||0,p[1]||0,0,0); if(d.getTime()<=Date.now()+5000)d.setDate(d.getDate()+1); return (typeof dateKey==='function')?dateKey(d):d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function fixExistingTimeOnlyTasks(){ try{ var changed=false; allTasks().forEach(function(t){ if(t&&t.time&&!t.date&&!t.recurrence&&!t.done){t.date=dkTime(t.time);changed=true;} }); if(changed){saveTasks(); if(typeof schedulePendingReminders==='function')schedulePendingReminders(false);} }catch(e){} }
   function eventTime(t){try{return eventDueAt(t)}catch(e){ if(t&&t.date&&t.time)return new Date(t.date+'T'+t.time); return null; }}
@@ -137,16 +137,16 @@ const PLANNER_PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s=text;
-  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V12.0');
-  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 12.0 • Tarefas restauradas.');
-  s=s.replace(/version:'\d+\.\d+'/g,"version:'12.0'");
+  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V12.1');
+  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 12.1 • Estrela ajustada.');
+  s=s.replace(/version:'\d+\.\d+'/g,"version:'12.1'");
   s=s.replace("function shouldSchedule(t){return !t.paused&&!t.done&&(hasReminderIntent(t.text)||!!t.recurrence||!!(t.date&&t.time))}","function shouldSchedule(t){return !t.paused&&!t.done&&(hasReminderIntent(t.text)||!!t.recurrence||!!t.time||!!(t.date&&t.time))}");
   if(!s.includes('function dateKeyForTimeOnly(time)')){s=s.replace('function makeItem(text,old){',"function dateKeyForTimeOnly(time){let d=new Date(),p=(time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+5000)d.setDate(d.getDate()+1);return dateKey(d)}\nfunction makeItem(text,old){");}
   s=s.replace("date:recurrence?'':parseDate(text),time,","date:recurrence?'':(parseDate(text)||(time?dateKeyForTimeOnly(time):'')),time,");
   s=s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+20000/g,'sendAt.getTime()<Date.now()+5000');
   s=s.replace(/sendAt\.getTime\(\)<Date\.now\(\)\+15000/g,'sendAt.getTime()<Date.now()+5000');
-  if(!s.includes('Ajuste 12.0: restaura tarefas + estrela robusta')){s=s.replace('\n</style>','\n'+PLANNER_PATCH_CSS+'\n</style>');}
-  if(!s.includes("const VERSION='12.0'")){s=s.replace('\n</body>',PLANNER_PATCH_JS+'\n</body>');}
+  if(!s.includes('Ajuste 12.1: estrela menor e fora do texto')){s=s.replace('\n</style>','\n'+PLANNER_PATCH_CSS+'\n</style>');}
+  if(!s.includes("const VERSION='12.1'")){s=s.replace('\n</body>',PLANNER_PATCH_JS+'\n</body>');}
   return s;
 }
 
