@@ -1,23 +1,24 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 14.8 — criação direta e agendamento no próprio botão.
-// Evita depender de funções internas que o iPhone/PWA às vezes não expõe para o patch.
+// Versão 14.9 — leitura reforçada do texto antes de organizar.
+// Corrige iPhone/PWA quando o texto aparece no campo, mas o botão lê vazio.
 self.addEventListener('install', event => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 const PATCH_CSS = `
-<style id="fix-148-css">
+<style id="fix-149-css">
 #todayList .doneBtn{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #todayList .miniMain{padding-right:0!important}
 #add,#voice{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;pointer-events:auto!important}
 </style>`;
 
 const PATCH_JS = `
-<script id="fix-148-js">
+<script id="fix-149-js">
 (function(){
-  var VERSION='14.8';
+  var VERSION='14.9';
   var WORKER_URL='https://still-dew-5c29.brunageo10.workers.dev/';
   var busyAdd=false, busyVoice=false;
+  var PH='Ex.: amanhã cedo imprimir atividade, semana que vem reunião, dia 10 pagar água ou a cada 15 dias conferir boletos.';
 
   function el(id){return document.getElementById(id)}
   function pad(n){return String(n).padStart(2,'0')}
@@ -27,7 +28,34 @@ const PATCH_JS = `
   function readJSON(k,f){try{var v=JSON.parse(localStorage.getItem(k)||'');return v||f}catch(e){return f}}
   function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
   function setVersion(){
-    try{var v=el('versionLine'); if(v)v.textContent='Versão 14.8 • Botões e agendamento corrigidos.'; document.title='Meu Planner — Bruna V14.8'}catch(e){}
+    try{var v=el('versionLine'); if(v)v.textContent='Versão 14.9 • Leitura do texto corrigida.'; document.title='Meu Planner — Bruna V14.9'}catch(e){}
+  }
+  function cleanText(v){
+    v=String(v||'').replace(/\u200b/g,'').trim();
+    if(!v)return '';
+    if(v===PH)return '';
+    if(v.indexOf('Ex.: amanhã cedo')===0)return '';
+    return v;
+  }
+  function rememberText(v){
+    v=cleanText(v);
+    if(v){
+      try{window.__brunaLastInputText=v}catch(e){}
+      try{sessionStorage.setItem('brunaDraftText',v)}catch(e){}
+    }
+    return v;
+  }
+  function getText(){
+    var c=[], input=el('input');
+    if(input)c.push(input.value,input.textContent,input.innerText,input.getAttribute('value'));
+    var ta=document.querySelector('textarea');
+    if(ta&&ta!==input)c.push(ta.value,ta.textContent,ta.innerText,ta.getAttribute('value'));
+    var a=document.activeElement;
+    if(a)c.push(a.value,a.textContent,a.innerText,a.getAttribute&&a.getAttribute('value'));
+    try{c.push(window.__brunaLastInputText)}catch(e){}
+    try{c.push(sessionStorage.getItem('brunaDraftText'))}catch(e){}
+    for(var i=0;i<c.length;i++){var t=cleanText(c[i]);if(t)return t;}
+    return '';
   }
   function parseTime(text){
     var s=norm(text), m=s.match(/\\b(?:as?\\s*)?([01]?\\d|2[0-3])\\s*(?:h|:)\\s*([0-5]\\d)\\b/);
@@ -113,26 +141,34 @@ const PATCH_JS = `
     writeJSON('brunaScheduled',s);
     return {ok:true};
   }
-  async function organize(ev){
-    try{if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation()}}catch(e){}
-    if(busyAdd)return false; busyAdd=true; setTimeout(function(){busyAdd=false},1200);
+  function clearInput(){
     var input=el('input');
-    var text=input&&input.value?input.value.trim():'';
-    if(!text){show('Escreva ou fale alguma coisa primeiro.');return false;}
+    if(input){input.value='';input.textContent='';input.removeAttribute('value')}
+    try{window.__brunaLastInputText=''}catch(e){}
+    try{sessionStorage.removeItem('brunaDraftText')}catch(e){}
+  }
+  async function organizeNow(){
+    if(busyAdd)return false; busyAdd=true; setTimeout(function(){busyAdd=false},1400);
+    var text=getText();
+    if(!text){show('Não consegui ler o texto. Toque no campo, digite novamente e aperte Organizar.');return false;}
     var time=parseTime(text), cls=classify(text), date=parseDate(text,time);
     var t={id:Date.now()+Math.floor(Math.random()*1000),text:text,cat:cls.cat,sub:cls.sub,date:date,time:time,recurrence:null,paused:false,done:false,priority:false,created:new Date().toISOString()};
     saveTaskToBase(t);
-    if(input)input.value='';
-    var scheduled=false, msg='✅ Tarefa organizada'+(time?' • '+time:'');
+    clearInput();
+    var msg='✅ Tarefa organizada'+(time?' • '+time:'');
     try{
       var res=await scheduleDirect(t);
-      scheduled=!!(res&&res.ok);
-      if(scheduled)msg='🔔 Tarefa organizada e aviso agendado • '+time;
+      if(res&&res.ok)msg='🔔 Tarefa organizada e aviso agendado • '+time;
       else if(res&&res.reason==='horário muito próximo')msg='✅ Tarefa salva, mas o horário está muito próximo para avisar.';
     }catch(e){msg='✅ Tarefa salva. Aviso não agendado: '+e.message;}
     try{ if(typeof render==='function')render(); }catch(e){}
     show(msg);
     if(typeof render!=='function')setTimeout(function(){location.reload()},700);
+    return false;
+  }
+  function organize(ev){
+    try{if(ev){ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation()}}catch(e){}
+    setTimeout(function(){organizeNow()},120);
     return false;
   }
   function showMic(title,hint,on){
@@ -147,7 +183,7 @@ const PATCH_JS = `
         var r=new SR();
         r.lang='pt-BR';r.interimResults=false;r.continuous=false;
         r.onstart=function(){showMic('Ouvindo...','Fale sua tarefa agora.',true)};
-        r.onresult=function(e){var input=el('input'); if(input)input.value=e.results[0][0].transcript; showMic('Texto recebido','Revise e toque em Organizar automaticamente.',false)};
+        r.onresult=function(e){var txt=e.results[0][0].transcript;var input=el('input'); if(input){input.value=txt;input.textContent=txt;input.setAttribute('value',txt)} rememberText(txt); showMic('Texto recebido','Revise e toque em Organizar automaticamente.',false)};
         r.onerror=function(){showMic('Use o microfone do teclado','Toque no microfone do teclado do iPhone e fale sua tarefa.',false)};
         r.onend=function(){try{var b=el('micBox'); if(b)b.classList.remove('listening')}catch(e){}};
         r.start();
@@ -158,11 +194,18 @@ const PATCH_JS = `
     showMic('Use o microfone do teclado','Toque no microfone do teclado do iPhone e fale sua tarefa.',false);
     return false;
   }
+  function bindDraft(){
+    var input=el('input');
+    if(input&&!input.dataset.fix149Draft){
+      input.dataset.fix149Draft='1';
+      ['input','change','keyup','compositionend','blur'].forEach(function(evt){input.addEventListener(evt,function(){rememberText(input.value||input.textContent||'')},true)});
+    }
+  }
   function bind(){
-    setVersion();
+    setVersion(); bindDraft();
     var add=el('add'), v=el('voice');
-    if(add&&!add.dataset.fix148){add.dataset.fix148='1';add.onclick=organize;add.addEventListener('click',organize,true);add.addEventListener('touchend',organize,true);add.addEventListener('pointerup',organize,true)}
-    if(v&&!v.dataset.fix148){v.dataset.fix148='1';v.onclick=voice;v.addEventListener('click',voice,true);v.addEventListener('touchend',voice,true);v.addEventListener('pointerup',voice,true)}
+    if(add&&!add.dataset.fix149){add.dataset.fix149='1';add.onclick=organize;add.addEventListener('click',organize,true)}
+    if(v&&!v.dataset.fix149){v.dataset.fix149='1';v.onclick=voice;v.addEventListener('click',voice,true)}
   }
   function start(){bind();setTimeout(bind,300);setTimeout(bind,1000);}
   if(document.readyState==='loading')window.addEventListener('load',start);else start();
@@ -171,11 +214,11 @@ const PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s=text;
-  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V14.8');
-  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 14.8 • Botões e agendamento corrigidos.');
-  s=s.replace(/const VERSION='\d+\.\d+'/g,"const VERSION='14.8'");
-  if(!s.includes('fix-148-css'))s=s.replace('</head>',PATCH_CSS+'\n</head>');
-  if(!s.includes('fix-148-js'))s=s.replace('</body>',PATCH_JS+'\n</body>');
+  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V14.9');
+  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 14.9 • Leitura do texto corrigida.');
+  s=s.replace(/const VERSION='\d+\.\d+'/g,"const VERSION='14.9'");
+  if(!s.includes('fix-149-css'))s=s.replace('</head>',PATCH_CSS+'\n</head>');
+  if(!s.includes('fix-149-js'))s=s.replace('</body>',PATCH_JS+'\n</body>');
   return s;
 }
 
