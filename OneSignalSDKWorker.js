@@ -1,29 +1,37 @@
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-// Versão 14.4 — clique reforçado nos botões principais.
-// Mantém a base 14.1 estável, remove o Feito da Agenda e restaura Organizar/Ditado.
+// Versão 14.5 — restaura ditado direto e mantém Feito removido.
 self.addEventListener('install', event => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 const PATCH_CSS = `
-<style id="fix-144-css">
+<style id="fix-145-css">
 #todayList .doneBtn{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #todayList .miniMain{padding-right:0!important}
 #add,#voice{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;pointer-events:auto!important}
 </style>`;
 
 const PATCH_JS = `
-<script id="fix-buttons-144-js">
+<script id="fix-buttons-145-js">
 (function(){
-  const VERSION='14.4';
+  const VERSION='14.5';
   let addBusy=false;
+  let voiceBusy=false;
+  let activeRecognition=null;
   function el(id){return document.getElementById(id)}
   function norm(v){return String(v||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase()}
   function pad(n){return String(n).padStart(2,'0')}
-  function todayKey(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
   function toastSafe(msg){try{toast(msg)}catch(e){try{alert(msg)}catch(_){}}}
   function setVersion(){
-    try{const v=el('versionLine'); if(v)v.textContent='Versão 14.4 • Botões corrigidos.'; document.title='Meu Planner — Bruna V14.4';}catch(e){}
+    try{const v=el('versionLine'); if(v)v.textContent='Versão 14.5 • Ditado direto restaurado.'; document.title='Meu Planner — Bruna V14.5';}catch(e){}
+  }
+  function showMic(title,hint,listening){
+    try{
+      const box=el('micBox'), mt=el('micTitle'), mh=el('micHint');
+      if(box){box.classList.add('on');box.classList.toggle('listening',!!listening)}
+      if(mt)mt.textContent=title;
+      if(mh)mh.textContent=hint;
+    }catch(e){}
   }
   function getText(){const i=el('input');return i&&i.value?i.value.trim():''}
   function parseTimeLocal(text){
@@ -74,19 +82,61 @@ const PATCH_JS = `
     }catch(e){}
     return fallbackAdd();
   }
+  function startDirectSpeech(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR)throw new Error('speech-api-unavailable');
+    if(activeRecognition){try{activeRecognition.abort()}catch(e){} activeRecognition=null;}
+    const rec=new SR();
+    activeRecognition=rec;
+    rec.lang='pt-BR';
+    rec.interimResults=false;
+    rec.continuous=false;
+    rec.maxAlternatives=1;
+    let gotResult=false;
+    rec.onstart=function(){showMic('Ouvindo de verdade...','Fale sua tarefa agora.',true)};
+    rec.onresult=function(e){
+      gotResult=true;
+      const transcript=e&&e.results&&e.results[0]&&e.results[0][0]?e.results[0][0].transcript:'';
+      const input=el('input');
+      if(input){input.value=transcript;try{input.dispatchEvent(new Event('input',{bubbles:true}))}catch(_){} }
+      showMic('Texto recebido','Revise e toque em Organizar automaticamente.',false);
+      activeRecognition=null;
+    };
+    rec.onerror=function(e){
+      activeRecognition=null;
+      voiceBusy=false;
+      showMic('Use o microfone do teclado','O iPhone bloqueou o ditado automático. Toque no microfone do teclado.',false);
+      toastSafe('🎙️ O iPhone bloqueou o ditado direto. Use o microfone do teclado.');
+    };
+    rec.onend=function(){
+      activeRecognition=null;
+      voiceBusy=false;
+      if(!gotResult){showMic('Ditado pronto','Toque em Ditado para tentar falar novamente.',false)}
+    };
+    rec.start();
+  }
   function robustVoice(ev){
     try{if(ev){ev.preventDefault();ev.stopPropagation();}}catch(e){}
-    try{if(typeof startDictation==='function')return startDictation(ev||new Event('click'))}catch(e){}
-    const input=el('input'); if(input)input.focus();
-    try{const box=el('micBox'),title=el('micTitle'),hint=el('micHint'); if(box)box.classList.add('on'); if(title)title.textContent='Use o microfone do teclado'; if(hint)hint.textContent='Toque no microfone do teclado do iPhone e fale sua tarefa.';}catch(e){}
-    toastSafe('🎙️ Toque no microfone do teclado do iPhone.');
-    return false;
+    if(voiceBusy)return false;
+    voiceBusy=true;
+    setTimeout(function(){voiceBusy=false},7000);
+    try{
+      startDirectSpeech();
+      return false;
+    }catch(err){
+      voiceBusy=false;
+      try{if(typeof startDictation==='function')return startDictation(ev||new Event('click'))}catch(e){}
+      const input=el('input'); if(input)input.focus();
+      showMic('Use o microfone do teclado','Toque no microfone do teclado do iPhone e fale sua tarefa.',false);
+      toastSafe('🎙️ Toque no microfone do teclado do iPhone.');
+      return false;
+    }
   }
   function bind(){
     setVersion();
     const add=el('add'), voice=el('voice');
-    if(add&&!add.dataset.fix144){add.dataset.fix144='1';add.onclick=robustAdd;add.addEventListener('click',robustAdd,true);add.addEventListener('touchend',robustAdd,true);add.addEventListener('pointerup',robustAdd,true)}
-    if(voice&&!voice.dataset.fix144){voice.dataset.fix144='1';voice.onclick=robustVoice;voice.addEventListener('click',robustVoice,true);voice.addEventListener('touchend',robustVoice,true);voice.addEventListener('pointerup',robustVoice,true)}
+    if(add&&!add.dataset.fix145){add.dataset.fix145='1';add.onclick=robustAdd;add.addEventListener('click',robustAdd,true);add.addEventListener('touchend',robustAdd,true)}
+    if(voice&&!voice.dataset.fix145){voice.dataset.fix145='1';voice.onclick=robustVoice;voice.addEventListener('click',robustVoice,true);voice.addEventListener('touchend',robustVoice,true)}
   }
   function start(){bind();setTimeout(bind,400);setTimeout(bind,1000);}
   if(document.readyState==='loading')window.addEventListener('load',start);else start();
@@ -95,10 +145,10 @@ const PATCH_JS = `
 
 function patchPlannerHtml(text){
   let s=text;
-  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V14.4');
-  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 14.4 • Botões corrigidos.');
-  if(!s.includes('fix-144-css'))s=s.replace('</head>',PATCH_CSS+'\n</head>');
-  if(!s.includes('fix-buttons-144-js'))s=s.replace('</body>',PATCH_JS+'\n</body>');
+  s=s.replace(/Meu Planner — Bruna V\d+\.\d+/g,'Meu Planner — Bruna V14.5');
+  s=s.replace(/Versão \d+\.\d+ • [^<]+/g,'Versão 14.5 • Ditado direto restaurado.');
+  if(!s.includes('fix-145-css'))s=s.replace('</head>',PATCH_CSS+'\n</head>');
+  if(!s.includes('fix-buttons-145-js'))s=s.replace('</body>',PATCH_JS+'\n</body>');
   return s;
 }
 
