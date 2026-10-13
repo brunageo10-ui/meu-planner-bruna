@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Atualizar Meu Planner</title>
+<style>
+:root{--w:#8a1238;--w2:#42101f;--bg:#fbf5ef;--line:#eadbd2;--rose:#f9e4ea}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 10% -10%,#fffaf6,#fff7f1 35%,var(--bg));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#21181b;padding:24px}.card{width:min(520px,100%);background:#fffdfb;border:1px solid var(--line);border-radius:28px;box-shadow:0 12px 28px rgba(82,44,37,.08);padding:24px;text-align:center}h1{font-family:Georgia,serif;color:var(--w2);font-size:30px;margin:0 0 8px}p{color:#7f7273;font-size:16px;line-height:1.45;margin:10px 0}.btn{width:100%;border:0;border-radius:18px;padding:16px 18px;font-weight:900;font-size:17px;background:linear-gradient(135deg,var(--w),#aa1746);color:#fff;box-shadow:0 10px 22px rgba(138,18,56,.2);margin-top:16px}.note{font-size:13px;color:#8b7b7f;margin-top:14px}.ok{color:var(--w);font-weight:800}</style>
+</head>
+<body>
+<div class="card">
+<h1>Atualizar app 💛</h1>
+<p>Vou limpar a versão travada do <b>Meu Planner</b> neste iPhone.</p>
+<p class="ok">Suas tarefas não serão apagadas.</p>
+<button class="btn" id="go">Atualizar agora</button>
+<p class="note" id="status">Toque no botão para corrigir a versão presa.</p>
+</div>
+<script>
+async function limpar(){
+  const status=document.getElementById('status');
+  try{
+    status.textContent='Limpando versão antiga...';
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+    if(window.caches){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    status.textContent='Pronto. Abrindo o planner...';
+    setTimeout(()=>{location.href='./?base=160'},700);
+  }catch(e){
+    status.textContent='Não consegui limpar automaticamente. Feche e abra o app novamente.';
+  }
+}
+document.getElementById('go').addEventListener('click',limpar);
+</script>
+</body>
+</html>
