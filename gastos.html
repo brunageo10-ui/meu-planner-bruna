@@ -3,143 +3,77 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Meus Gastos — Bruna</title>
 <meta name="theme-color" content="#8a1238">
+<title>Meus Gastos — Bruna</title>
 <style>
-:root{--w:#8a1238;--w2:#42101f;--bg:#fbf5ef;--ink:#21181b;--mut:#7f7273;--line:#eadbd2;--rose:#f9e4ea;--green:#227a4a;--red:#b4234b;--sh:0 9px 22px rgba(82,44,37,.07)}
-*{box-sizing:border-box;min-width:0}body{margin:0;background:radial-gradient(circle at 10% -10%,#fffaf6,#fff7f1 35%,var(--bg));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}main{width:100%;max-width:780px;margin:0 auto;padding:26px 18px 30px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.hello h1{font-family:Georgia,serif;margin:0;color:var(--w2);font-size:28px}.hello p{margin:6px 0 0;color:var(--mut)}.link{border:1px solid var(--line);background:#fffdfb;color:var(--w);border-radius:999px;padding:10px 14px;text-decoration:none;font-weight:850;box-shadow:var(--sh);white-space:nowrap}.card{background:linear-gradient(145deg,#fffefe,#fff8f3);border:1px solid var(--line);border-radius:23px;box-shadow:var(--sh);padding:15px;margin:12px 0}.title{font-weight:900;color:var(--w2);font-size:20px;margin:0 0 10px}.quickBox{display:grid;grid-template-columns:1fr;gap:10px}.quickInput{width:100%;border:1px solid var(--line);background:#fff;border-radius:18px;padding:15px;font-size:18px;outline:0;min-height:58px}.actions{display:grid;grid-template-columns:1fr 1.2fr;gap:9px}.btn{border:0;border-radius:17px;padding:13px 12px;font-weight:900;color:var(--w);background:var(--rose)}.primary{background:linear-gradient(135deg,var(--w),#aa1746);color:white;box-shadow:0 10px 22px rgba(138,18,56,.21)}.hint{color:var(--mut);font-size:13px;line-height:1.35}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#fffdfb;border:1px solid var(--line);border-radius:16px;padding:12px 8px;text-align:center;box-shadow:var(--sh)}.stat small{display:block;color:var(--mut);font-size:12px}.stat b{display:block;font-size:20px;color:var(--w);margin-top:4px}.stat.positivo b{color:var(--green)}.stat.negativo b{color:var(--red)}.form{display:grid;gap:9px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field label{display:block;color:var(--mut);font-size:12px;margin:0 0 5px}.field input,.field select{width:100%;border:1px solid var(--line);background:#fff;border-radius:15px;padding:12px;outline:0}.toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toggle button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px;font-weight:900;color:var(--mut)}.toggle button.on{background:var(--w);color:#fff;border-color:var(--w)}.list{display:grid;gap:9px}.item{position:relative;background:#fffdfb;border:1px solid var(--line);border-radius:20px;padding:13px 52px 13px 13px;box-shadow:var(--sh)}.item.income{border-color:#cce7d7}.item.expense{border-color:#efd0d9}.itemTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.desc{font-weight:900;font-size:17px}.val{font-weight:950;color:var(--red);white-space:nowrap}.income .val{color:var(--green)}.meta{color:var(--mut);font-size:12px;margin-top:7px;line-height:1.45}.tag{display:inline-flex;background:var(--rose);color:var(--w);border-radius:999px;padding:4px 9px;margin:5px 5px 0 0;font-weight:800}.del{position:absolute;right:10px;top:10px;width:34px;height:34px;border:0;border-radius:50%;background:#f3e4e2;color:var(--w);font-weight:900;font-size:18px}.empty{background:#fff;border:1px dashed var(--line);border-radius:18px;padding:14px;color:var(--mut);text-align:center}.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#2b2224;color:#fff;padding:12px 16px;border-radius:16px;display:none;max-width:90%;z-index:99}.version{color:var(--mut);font-size:12px;margin-top:10px}.miniLink{color:var(--w);font-weight:850;text-decoration:none}@media(max-width:430px){main{padding:22px 15px 26px}.hello h1{font-size:25px}.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.actions{grid-template-columns:1fr 1.1fr}.top{align-items:center}.link{padding:9px 11px;font-size:13px}}
+:root{--w:#8a1238;--w2:#42101f;--bg:#fbf5ef;--ink:#21181b;--mut:#7f7273;--line:#eadbd2;--rose:#f9e4ea;--green:#167a4a;--red:#a51635;--sh:0 9px 22px rgba(82,44,37,.07)}
+*{box-sizing:border-box;min-width:0}html,body{margin:0;width:100%;max-width:100%;overflow-x:hidden;background:radial-gradient(circle at 10% -10%,#fffaf6,#fff7f1 35%,var(--bg));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}main{width:100%;max-width:780px;margin:0 auto;padding:28px 18px 34px}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:8px 0 14px}.hello h1{font-family:Georgia,serif;margin:0;color:var(--w2);font-size:28px;line-height:1}.hello p{margin:6px 0 0;color:var(--mut);font-size:14px}.round{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:#fffdfb;color:var(--w);box-shadow:var(--sh)}.card,.item{background:linear-gradient(145deg,#fffefe,#fff8f3);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh);overflow:hidden}.card{padding:14px;margin:12px 0}.title{font-weight:900;color:var(--w2);font-size:18px;margin:0 0 10px}.quick{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:17px;padding:10px;margin-bottom:9px}.quick input{width:100%;border:0;outline:0;background:transparent;font-size:17px}.hint{font-size:12px;color:var(--mut);line-height:1.35;margin:8px 2px}.actions{display:grid;grid-template-columns:.7fr 1fr;gap:9px}.btn{border:0;border-radius:16px;padding:12px 10px;font-weight:900;background:var(--rose);color:var(--w)}.primary{background:linear-gradient(135deg,var(--w),#aa1746);color:#fff;box-shadow:0 10px 22px rgba(138,18,56,.21)}.green{background:#e1f6eb;color:var(--green)}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{margin:8px 0}.field label{display:block;font-size:12px;color:var(--mut);font-weight:800;margin:0 0 4px 2px}.field input,.field select{width:100%;border:1px solid var(--line);background:#fff;border-radius:15px;padding:11px;outline:0;color:var(--ink)}.toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.toggle button{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:15px;padding:11px;font-weight:900}.toggle button.on[data-type="saida"]{background:#ffe9ee;color:var(--red);border-color:#f1c6cf}.toggle button.on[data-type="entrada"]{background:#e3f8ed;color:var(--green);border-color:#bde8cf}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 6px;text-align:center;box-shadow:var(--sh);font-size:12px;color:var(--mut)}.stat b{display:block;font-size:19px;color:var(--w);line-height:1.15}.stat .in{color:var(--green)}.stat .out{color:var(--red)}.item{padding:12px;margin:9px 0;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;background:#fffdfb}.itemText{font-weight:850;font-size:16px}.meta{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.35}.money{font-weight:950;font-size:16px;white-space:nowrap}.money.in{color:var(--green)}.money.out{color:var(--red)}.del{border:0;border-radius:50%;width:32px;height:32px;background:#f3e4e2;color:var(--w);font-weight:900}.listHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px}.listHead h2{font-size:22px;margin:0}.small{border:0;border-radius:999px;background:var(--rose);color:var(--w);font-weight:900;padding:9px 12px}.empty{padding:14px;background:#fff;border:1px dashed var(--line);border-radius:16px;color:var(--mut);text-align:center}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#2b2224;color:#fff;padding:12px 16px;border-radius:16px;display:none;max-width:90%;z-index:99}@media(max-width:390px){main{padding-left:16px;padding-right:14px}.row,.stats{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.hello h1{font-size:25px}}
 </style>
 </head>
 <body>
 <main>
   <div class="top">
-    <div class="hello"><h1>Meus gastos 💰</h1><p>Controle simples para gastos e recebimentos.</p></div>
-    <a class="link" href="index.html">← Planner</a>
+    <div class="hello"><h1>Meus gastos 💰</h1><p>Controle simples do dinheiro que entra e sai.</p></div>
+    <button class="round" onclick="location.href='index.html'">⌂</button>
   </div>
 
   <section class="card">
     <div class="title">Lançamento rápido</div>
-    <div class="quickBox">
-      <input id="quick" class="quickInput" placeholder="Ex.: 150 gasolina, 35 mercado, 250 passeio recebido">
-      <div class="actions">
-        <button class="btn" id="voiceQuick">🎙️ Falar</button>
-        <button class="btn primary" id="quickAdd">✨ Organizar gasto</button>
-      </div>
-      <div class="hint">Você pode falar ou digitar: <b>150 gasolina</b>, <b>120 internet</b>, <b>250 pix recebido</b>. O app tenta preencher tudo sozinho.</div>
-    </div>
+    <div class="quick"><span>✎</span><input id="quickText" placeholder="Ex.: 150 gasolina, recebi 250 passeio, entrou 1500 salário"></div>
+    <div class="actions"><button class="btn" id="voiceBtn">🎙️ Falar</button><button class="btn primary" id="quickBtn">✨ Organizar</button></div>
+    <div class="hint">Para dinheiro que entra, use palavras como <b>recebi</b>, <b>recebido</b>, <b>entrou</b>, <b>entrada</b>, <b>ganhei</b> ou <b>salário</b>.</div>
+  </section>
+
+  <section class="card">
+    <div class="title">Adicionar manualmente</div>
+    <div class="toggle"><button id="saidaBtn" data-type="saida" class="on">💸 Gasto</button><button id="entradaBtn" data-type="entrada">💰 Entrada</button></div>
+    <div class="row"><div class="field"><label>Valor</label><input id="valor" inputmode="decimal" placeholder="R$ 0,00"></div><div class="field"><label>Data</label><input id="data" type="date"></div></div>
+    <div class="field"><label>Descrição</label><input id="desc" placeholder="Gasolina, mercado, cliente, salário..."></div>
+    <div class="row"><div class="field"><label>Categoria</label><select id="cat"><option>Casa</option><option>Alimentação</option><option>Transporte</option><option>Escola</option><option>SGS Vinho & Café</option><option>Saúde</option><option>Lazer</option><option>Recebimentos</option><option>Outros</option></select></div><div class="field"><label>Forma</label><select id="forma"><option>Pix</option><option>Cartão</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Outro</option></select></div></div>
+    <button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
   </section>
 
   <section class="card">
     <div class="title">Resumo do mês</div>
-    <div class="grid">
-      <div class="stat positivo"><small>Recebido</small><b id="sumIncome">R$ 0,00</b></div>
-      <div class="stat negativo"><small>Gasto</small><b id="sumExpense">R$ 0,00</b></div>
-      <div class="stat"><small>Saldo</small><b id="sumBalance">R$ 0,00</b></div>
-    </div>
+    <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
   </section>
 
-  <section class="card">
-    <details>
-      <summary class="title">Adicionar manualmente</summary>
-      <div class="form">
-        <div class="toggle"><button id="typeExpense" class="on">Gasto</button><button id="typeIncome">Recebimento</button></div>
-        <div class="row"><div class="field"><label>Valor</label><input id="amount" inputmode="decimal" placeholder="Ex.: 150,00"></div><div class="field"><label>Data</label><input id="date" type="date"></div></div>
-        <div class="field"><label>Descrição</label><input id="desc" placeholder="Ex.: gasolina"></div>
-        <div class="row"><div class="field"><label>Categoria</label><select id="category"><option>Pessoal</option><option>Casa</option><option>Mercado</option><option>Transporte</option><option>Saúde</option><option>Escola</option><option>SGS Vinho & Café</option><option>Recebimentos</option><option>Outros</option></select></div><div class="field"><label>Forma</label><select id="method"><option>Não informado</option><option>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option></select></div></div>
-        <button class="btn primary" id="saveManual">Salvar lançamento</button>
-      </div>
-    </details>
-  </section>
-
-  <section class="card">
-    <div class="title">Lançamentos</div>
-    <div id="list" class="list"></div>
-  </section>
-
-  <section class="card">
-    <div class="title">Ferramentas</div>
-    <div class="tools"><button class="btn" id="csvBtn">Baixar CSV</button><button class="btn" id="backupBtn">Backup JSON</button></div>
-    <div class="version">Versão 1.1 • Lançamento rápido inteligente</div>
-  </section>
+  <div class="listHead"><h2>Lançamentos</h2><div><button class="small" id="csvBtn">CSV</button> <button class="small" id="backupBtn">Backup</button></div></div>
+  <div id="list"></div>
 </main>
 <div class="toast" id="toast"></div>
 <script>
 'use strict';
-const KEY='brunaGastosV1';
-let type='expense';
-let items=[];
+const KEY='brunaGastosLancamentos';
+let tipo='saida';
+let items=load();
 const $=id=>document.getElementById(id);
 const today=()=>new Date().toISOString().slice(0,10);
-$('date').value=today();
-function money(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
-function parseMoney(text){
-  let raw=String(text||'').replace(/r\$|reais|real/gi,' ');
-  let m=raw.match(/\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?/);
-  if(!m)return 0;
-  let s=m[0];
-  if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');
-  else if(s.includes(','))s=s.replace(',','.');
-  return Number(s)||0;
-}
-function cleanText(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
-function categoryFrom(text,kind){
-  const n=cleanText(text);
-  if(kind==='income')return 'Recebimentos';
-  if(/gasolina|combustivel|alcool|etanol|uber|onibus|transporte/.test(n))return 'Transporte';
-  if(/mercado|supermercado|sacolao|padaria|acougue|hortifruti|comida/.test(n))return 'Mercado';
-  if(/farmacia|remedio|medico|consulta|saude/.test(n))return 'Saúde';
-  if(/luz|agua|internet|aluguel|condominio|casa|boleto|conta/.test(n))return 'Casa';
-  if(/escola|aluno|atividade|material|apostila/.test(n))return 'Escola';
-  if(/vinho|cafe|tour|passeio|cliente|degustacao|fazenda|vinicola/.test(n))return 'SGS Vinho & Café';
-  return 'Pessoal';
-}
-function methodFrom(text){const n=cleanText(text);if(/pix/.test(n))return 'Pix';if(/credito|cartao/.test(n))return 'Cartão de crédito';if(/debito/.test(n))return 'Cartão de débito';if(/dinheiro/.test(n))return 'Dinheiro';return 'Não informado';}
-function typeFrom(text){const n=cleanText(text);return /recebi|recebido|entrada|entrou|ganhei|caiu|venda|pagamento recebido|pix recebido|salario|salário/.test(n)?'income':'expense';}
-function descFrom(text){
-  let s=String(text||'').replace(/r\$|reais|real/gi,' ');
-  s=s.replace(/\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?/,' ');
-  s=s.replace(/\b(gastei|paguei|comprei|recebi|recebido|entrada|entrou|ganhei|caiu|pix|no|na|de|com)\b/gi,' ');
-  s=s.replace(/\s+/g,' ').trim();
-  return s?s.charAt(0).toUpperCase()+s.slice(1):'Lançamento';
-}
-function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2400)}
-function load(){try{items=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){items=[]}render();}
-function save(){localStorage.setItem(KEY,JSON.stringify(items));render();}
-function addItem(obj){items.unshift({id:Date.now(),date:today(),method:'Não informado',...obj});save();}
-function parseQuick(){
-  const text=$('quick').value.trim();
-  if(!text){toast('Digite ou fale um gasto. Ex.: 150 gasolina');return;}
-  const amount=parseMoney(text);
-  if(!amount){toast('Não encontrei o valor. Ex.: 150 gasolina');return;}
-  const kind=typeFrom(text), desc=descFrom(text);
-  addItem({type:kind,amount,desc,category:categoryFrom(text,kind),method:methodFrom(text),raw:text});
-  $('quick').value='';
-  toast((kind==='income'?'Recebimento':'Gasto')+' organizado • '+money(amount));
-}
-function setType(v){type=v;$('typeExpense').classList.toggle('on',v==='expense');$('typeIncome').classList.toggle('on',v==='income')}
-function manual(){const amount=parseMoney($('amount').value);if(!amount){toast('Informe o valor.');return}addItem({type,amount,desc:$('desc').value.trim()||'Lançamento',category:$('category').value,method:$('method').value,date:$('date').value||today()});$('amount').value='';$('desc').value='';toast('Lançamento salvo.');}
-function render(){
-  const now=new Date(), ym=now.toISOString().slice(0,7);
-  const month=items.filter(i=>(i.date||'').slice(0,7)===ym);
-  const inc=month.filter(i=>i.type==='income').reduce((a,b)=>a+Number(b.amount||0),0);
-  const exp=month.filter(i=>i.type!=='income').reduce((a,b)=>a+Number(b.amount||0),0);
-  $('sumIncome').textContent=money(inc);$('sumExpense').textContent=money(exp);$('sumBalance').textContent=money(inc-exp);
-  const list=$('list');
-  if(!items.length){list.innerHTML='<div class="empty">Nenhum lançamento ainda. Comece com: 150 gasolina</div>';return;}
-  list.innerHTML=items.map(i=>`<div class="item ${i.type==='income'?'income':'expense'}"><button class="del" data-del="${i.id}">×</button><div class="itemTop"><div class="desc">${escapeHtml(i.desc)}</div><div class="val">${i.type==='income'?'+':'-'} ${money(i.amount)}</div></div><div class="meta"><span class="tag">${escapeHtml(i.category||'Pessoal')}</span><span class="tag">${escapeHtml(i.method||'Não informado')}</span><br>${dateBR(i.date)} ${i.raw?`• “${escapeHtml(i.raw)}”`:''}</div></div>`).join('');
-  list.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{items=items.filter(i=>String(i.id)!==String(b.dataset.del));save();});
-}
-function dateBR(d){try{return new Date((d||today())+'T12:00:00').toLocaleDateString('pt-BR')}catch(e){return d||''}}
-function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
-function exportCSV(){const rows=[['data','tipo','valor','descricao','categoria','forma'],...items.map(i=>[i.date,i.type,i.amount,i.desc,i.category,i.method])];download('gastos-bruna.csv',rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv;charset=utf-8')}
-function backup(){download('backup-gastos-bruna.json',JSON.stringify(items,null,2),'application/json')}
-function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),800)}
-function voice(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){$('quick').focus();toast('Use o microfone do teclado do iPhone.');return;}
-  try{const r=new SR();r.lang='pt-BR';r.interimResults=false;r.maxAlternatives=1;r.onresult=e=>{$('quick').value=e.results[0][0].transcript;toast('Texto recebido. Toque em Organizar gasto.');};r.onerror=()=>{$('quick').focus();toast('Não consegui ouvir. Use o microfone do teclado.');};r.start();toast('Ouvindo...');}catch(e){$('quick').focus();toast('Toque no microfone do teclado.');}
-}
-$('quickAdd').onclick=parseQuick;$('quick').addEventListener('keydown',e=>{if(e.key==='Enter')parseQuick()});$('voiceQuick').onclick=voice;$('typeExpense').onclick=()=>setType('expense');$('typeIncome').onclick=()=>setType('income');$('saveManual').onclick=manual;$('csvBtn').onclick=exportCSV;$('backupBtn').onclick=backup;load();
+$('data').value=today();
+function money(v){return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(window.__t);window.__t=setTimeout(()=>t.style.display='none',2400)}
+function load(){try{const a=JSON.parse(localStorage.getItem(KEY)||'null');if(Array.isArray(a))return a;const b=JSON.parse(localStorage.getItem('brunaGastos')||'[]');return Array.isArray(b)?b:[]}catch(e){return []}}
+function save(){localStorage.setItem(KEY,JSON.stringify(items));localStorage.setItem('brunaGastos',JSON.stringify(items))}
+function setTipo(t){tipo=t;$('saidaBtn').classList.toggle('on',t==='saida');$('entradaBtn').classList.toggle('on',t==='entrada')}
+$('saidaBtn').onclick=()=>setTipo('saida');$('entradaBtn').onclick=()=>setTipo('entrada');
+function parseValor(s){s=String(s||'').replace(/r\$|reais|real/gi,' ');let m=s.match(/(?:^|\s)(\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:[,.]\d{1,2})?)(?:\s|$)/);if(!m)return 0;return Number(m[1].replace(/\./g,'').replace(',','.'))||0}
+function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
+function inferTipo(s){const n=norm(s);return /\b(recebi|recebido|recebida|entrada|entrou|ganhei|ganho|salario|pix recebido|cliente pagou|pagamento recebido)\b/.test(n)?'entrada':'saida'}
+function inferForma(s){const n=norm(s);if(/pix/.test(n))return 'Pix';if(/credito|cartao/.test(n))return 'Crédito';if(/debito/.test(n))return 'Débito';if(/dinheiro|especie/.test(n))return 'Dinheiro';return 'Pix'}
+function inferCat(s,t){const n=norm(s);if(t==='entrada')return /vinho|cafe|tour|passeio|cliente|degustacao|roteiro/.test(n)?'SGS Vinho & Café':'Recebimentos';if(/gasolina|combustivel|uber|onibus|transporte/.test(n))return 'Transporte';if(/mercado|comida|lanche|almoco|jantar|padaria|cafe/.test(n))return 'Alimentação';if(/agua|luz|energia|internet|aluguel|casa/.test(n))return 'Casa';if(/escola|apostila|aluno|imprimir|prova/.test(n))return 'Escola';if(/vinho|vinicola|tour|cliente|reels|instagram|cafe|queijo/.test(n))return 'SGS Vinho & Café';if(/remedio|consulta|medico|dentista/.test(n))return 'Saúde';return 'Outros'}
+function descFromQuick(s){let d=String(s||'').replace(/r\$|reais|real/gi,' ').replace(/(?:^|\s)(\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:[,.]\d{1,2})?)(?:\s|$)/,' ');d=d.replace(/\b(recebi|recebido|recebida|entrada|entrou|ganhei|ganho)\b/gi,' ').replace(/\s+/g,' ').trim();return d||'Lançamento'}
+function add(obj){items.unshift({id:Date.now(),tipo:obj.tipo||tipo,valor:Number(obj.valor)||0,desc:obj.desc||'Lançamento',cat:obj.cat||'Outros',forma:obj.forma||'Pix',data:obj.data||today(),created:new Date().toISOString()});save();render();}
+function addManual(){const v=parseValor($('valor').value);if(!v){toast('Informe o valor.');return}add({tipo,valor:v,desc:$('desc').value.trim()||'Lançamento',cat:$('cat').value,forma:$('forma').value,data:$('data').value||today()});$('valor').value='';$('desc').value='';toast(tipo==='entrada'?'Entrada salva 💰':'Gasto salvo 💸')}
+function addQuick(){const q=$('quickText').value.trim();if(!q){toast('Digite ou fale um lançamento.');return}const v=parseValor(q);if(!v){toast('Não encontrei o valor. Ex.: 150 gasolina');return}const t=inferTipo(q);add({tipo:t,valor:v,desc:descFromQuick(q),cat:inferCat(q,t),forma:inferForma(q),data:today()});$('quickText').value='';toast(t==='entrada'?'Entrada organizada 💰':'Gasto organizado 💸')}
+$('addBtn').onclick=addManual;$('quickBtn').onclick=addQuick;$('quickText').addEventListener('keydown',e=>{if(e.key==='Enter')addQuick()});
+function render(){const now=new Date(),ym=now.toISOString().slice(0,7);let entradas=0,saidas=0;items.forEach(i=>{if(String(i.data||'').slice(0,7)===ym){if(i.tipo==='entrada')entradas+=Number(i.valor)||0;else saidas+=Number(i.valor)||0}});$('totalIn').textContent=money(entradas);$('totalOut').textContent=money(saidas);$('saldo').textContent=money(entradas-saidas);$('saldo').style.color=(entradas-saidas)>=0?'var(--green)':'var(--red)';const list=$('list');if(!items.length){list.innerHTML='<div class="empty">Nenhum lançamento ainda.</div>';return}list.innerHTML=items.map(i=>`<div class="item"><div><div class="itemText">${escapeHtml(i.desc)}</div><div class="meta">${i.data||''} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div></div><div style="text-align:right"><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div><button class="del" onclick="delItem(${i.id})">×</button></div></div>`).join('')}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+window.delItem=id=>{items=items.filter(i=>i.id!==id);save();render();toast('Lançamento apagado.')}
+$('csvBtn').onclick=()=>{const rows=[['data','tipo','valor','descricao','categoria','forma'],...items.map(i=>[i.data,i.tipo,i.valor,i.desc,i.cat,i.forma])];download('gastos-bruna.csv',rows.map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(';')).join('\n'))}
+$('backupBtn').onclick=()=>download('backup-gastos-bruna.json',JSON.stringify(items,null,2));
+function download(name,content){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('voiceBtn').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){$('quickText').focus();toast('Use o microfone do teclado.');return}try{const r=new SR();r.lang='pt-BR';r.interimResults=false;r.continuous=false;r.onstart=()=>toast('Ouvindo...');r.onresult=e=>{$('quickText').value=e.results[0][0].transcript;toast('Texto recebido. Toque em Organizar.')};r.onerror=()=>toast('Toque no campo e use o microfone do teclado.');r.start()}catch(e){$('quickText').focus();toast('Use o microfone do teclado.')}};
+render();
 </script>
 </body>
 </html>
