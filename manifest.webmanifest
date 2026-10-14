@@ -1,7 +1,7 @@
 {
-  "name": "Meu Planner — Bruna",
-  "short_name": "Meu Planner",
-  "start_url": "./",
+  "name": "Meu App — Bruna",
+  "short_name": "Meu App",
+  "start_url": "./inicio.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#fff8f4",
