@@ -11,15 +11,41 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Meu App — Bruna</title>
 <style>
-:root{--w:#8a1238;--w2:#42101f;--bg:#fbf5ef;--ink:#21181b;--mut:#7f7273;--line:#eadbd2;--rose:#f9e4ea;--sh:0 9px 22px rgba(82,44,37,.07)}
-*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:radial-gradient(circle at 10% -10%,#fffaf6,#fff7f1 35%,var(--bg));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}main{max-width:760px;margin:0 auto;padding:34px 18px}.hello{margin:8px 0 18px}.hello h1{font-family:Georgia,serif;margin:0;color:var(--w2);font-size:31px;line-height:1}.hello p{margin:8px 0 0;color:var(--mut);font-size:15px;line-height:1.35}.grid{display:grid;gap:14px;margin-top:18px}.card{display:block;text-decoration:none;color:inherit;background:linear-gradient(145deg,#fffefe,#fff8f3);border:1px solid var(--line);border-radius:26px;box-shadow:var(--sh);padding:20px 18px}.icon{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:var(--rose);color:var(--w);font-size:28px;margin-bottom:12px}.card h2{margin:0;color:var(--w2);font-size:24px}.card p{margin:7px 0 0;color:var(--mut);font-size:14px;line-height:1.35}.cta{margin-top:14px;display:inline-flex;border-radius:999px;background:linear-gradient(135deg,var(--w),#aa1746);color:#fff;padding:10px 14px;font-weight:900}.note{margin-top:18px;color:var(--mut);font-size:12px;line-height:1.35;text-align:center}.footer{margin-top:22px;text-align:center}.footer a{color:var(--w);font-weight:800;text-decoration:none}
+:root{--wine:#851b43;--deep:#45172b;--muted:#8c7780;--pink:#fff0f3;--border:#efdce2;--shadow:0 14px 38px rgba(97,39,60,.09)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--deep);background:radial-gradient(ellipse at 90% 0%,#f9dce6 0%,transparent 44%),radial-gradient(ellipse at 0% 80%,#fff1de 0%,transparent 53%),#fff9f6}
+body{min-height:100vh;min-height:100dvh}
+main{max-width:650px;margin:auto;padding:46px 20px calc(35px + env(safe-area-inset-bottom))}
+.hello{margin:4px 0 30px;text-align:center}
+.eyebrow{display:inline-block;padding:8px 15px;border:1px solid #efd1da;border-radius:50px;background:#fffafa;color:var(--wine);font-size:11px;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:22px}
+.hello h1{font-family:Georgia,serif;color:var(--deep);font-weight:700;letter-spacing:-1.2px;font-size:clamp(34px,8vw,45px);line-height:1.1;margin:0}
+.hello p{font-size:15px;color:var(--muted);line-height:1.5;margin:12px auto 0;max-width:280px}
+.divider{width:58px;height:4px;background:linear-gradient(90deg,#d9a5b8,#852048);border-radius:4px;margin:20px auto 0}
+.grid{display:grid;gap:18px}
+.card{position:relative;overflow:hidden;display:block;text-decoration:none;color:inherit;border:1px solid var(--border);border-radius:28px;background:linear-gradient(155deg,#fff,#fff5f5);padding:22px;box-shadow:var(--shadow);transition:transform .18s ease,box-shadow .18s ease}
+.card:active{transform:scale(.985)}
+.card::after{content:"";position:absolute;top:-55px;right:-45px;width:155px;height:155px;background:radial-gradient(circle,#f9e0e8 0%,transparent 70%);pointer-events:none}
+.card:nth-child(2){background:linear-gradient(155deg,#fff,#fff8f0)}
+.card:nth-child(2)::after{background:radial-gradient(circle,#f7e4cd 0%,transparent 70%)}
+.icon{width:66px;height:66px;display:grid;place-items:center;border-radius:22px;background:linear-gradient(140deg,#fce1e9,#fff1f5);color:var(--wine);font-size:30px;margin-bottom:18px;box-shadow:inset 0 0 0 1px #f8d5df}
+.card:nth-child(2) .icon{background:linear-gradient(140deg,#f8ebd9,#fffbf4);box-shadow:inset 0 0 0 1px #f0dec3}
+.card h2{margin:0;font-family:Georgia,serif;color:var(--deep);font-size:27px;letter-spacing:-.4px}
+.card p{font-size:14px;color:var(--muted);line-height:1.55;margin:8px 0 0;max-width:315px}
+.cta{position:relative;display:flex;align-items:center;justify-content:space-between;margin-top:20px;width:100%;border-radius:16px;background:linear-gradient(110deg,#851b43,#ab2856);color:white;font-size:14px;font-weight:800;padding:14px 17px;box-shadow:0 9px 18px rgba(133,27,67,.16)}
+.cta::after{content:"→";font-size:23px;font-weight:400;line-height:.7}
+.card:nth-child(2) .cta{background:linear-gradient(110deg,#7e3049,#a44b66)}
+.note{margin:25px auto 0;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
+.footer{margin-top:23px;text-align:center}
+.footer a{font-size:12px;color:#987987;text-decoration:underline;text-underline-offset:3px}
+@media(min-width:700px){main{padding-top:70px}.grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <main>
   <section class="hello">
+    <div class="eyebrow">Seu espaço de organização</div>
     <h1>Olá, Bruna! 👋</h1>
-    <p>Escolha o que você quer organizar agora.</p>
+    <p>Um lugar especial para cuidar dos seus planos e do seu dinheiro.</p><div class="divider"></div>
   </section>
 
   <section class="grid">
@@ -38,7 +64,7 @@
     </a>
   </section>
 
-  <p class="note">Tela segura criada sem alterar o Planner principal que já está funcionando.</p>
+  <p class="note">Tudo o que importa, organizado no seu ritmo. ✨</p>
   <div class="footer"><a href="reset.html">Destravar app</a></div>
 </main>
 </body>
