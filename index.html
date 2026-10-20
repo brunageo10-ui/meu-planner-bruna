@@ -200,8 +200,45 @@ function adicionarEventoCalendario(t) {
   if (Number.isNaN(inicio.getTime())) return alert('Data ou horário inválido.');
   const fim = new Date(inicio.getTime() + 30 * 60000);
   const formato = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  const destino = prompt('Onde deseja adicionar?\n1 - Calendário do iPhone\n2 - Google Agenda\n3 - Ambos');
-  if (!['1', '2', '3'].includes(destino)) return;
+  // Escolha por toque/clique, sem precisar digitar números.
+  const anterior = document.getElementById('escolhaCalendarioModal');
+  if (anterior) anterior.remove();
+  const fundo = document.createElement('div');
+  fundo.id = 'escolhaCalendarioModal';
+  fundo.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(32,16,25,.55);display:flex;align-items:center;justify-content:center;padding:18px';
+  const painel = document.createElement('div');
+  painel.setAttribute('role', 'dialog');
+  painel.setAttribute('aria-modal', 'true');
+  painel.setAttribute('aria-label', 'Adicionar ao calendário');
+  painel.style.cssText = 'width:min(100%,390px);background:#fffafc;border-radius:22px;padding:22px;box-shadow:0 16px 45px #30121d40;font-family:inherit;color:#401c2a';
+  const titulo = document.createElement('h2');
+  titulo.textContent = '📅 Adicionar ao calendário';
+  titulo.style.cssText = 'font-size:20px;margin:0 0 8px';
+  painel.appendChild(titulo);
+  const descricao = document.createElement('p');
+  descricao.textContent = t.text + ' • ' + new Date(t.date+'T12:00').toLocaleDateString('pt-BR') + ' às ' + t.time;
+  descricao.style.cssText = 'font-size:13px;line-height:1.5;color:#786b72;margin:0 0 16px;overflow-wrap:anywhere';
+  painel.appendChild(descricao);
+  const fechar = () => fundo.remove();
+  [['1','📱 Calendário do iPhone'],['2','📅 Google Agenda'],['3','🗓️ Adicionar aos dois']].forEach(([valor,rotulo]) => {
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.textContent = rotulo;
+    botao.style.cssText = 'display:block;width:100%;padding:15px;margin:9px 0;border:1px solid #f0d3df;border-radius:15px;background:#fce9ef;color:#90133e;font-size:15px;font-weight:750;text-align:left;cursor:pointer';
+    botao.onclick = () => { fechar(); executarDestinoCalendario(valor); };
+    painel.appendChild(botao);
+  });
+  const cancelar = document.createElement('button');
+  cancelar.type = 'button';
+  cancelar.textContent = 'Cancelar';
+  cancelar.style.cssText = 'display:block;margin:13px auto 0;padding:10px 18px;border:0;background:transparent;color:#786b72;cursor:pointer';
+  cancelar.onclick = fechar;
+  painel.appendChild(cancelar);
+  fundo.appendChild(painel);
+  fundo.addEventListener('click', e => { if (e.target === fundo) fechar(); });
+  document.body.appendChild(fundo);
+  cancelar.focus();
+  function executarDestinoCalendario(destino) {
   if (destino === '2' || destino === '3') {
     const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
       + '&text=' + encodeURIComponent(t.text)
@@ -224,6 +261,7 @@ function adicionarEventoCalendario(t) {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
   }
 }
   function exportCalendar(){let lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Meu Planner Bruna//PT-BR','CALSCALE:GREGORIAN','X-WR-CALNAME:Meu Planner — Bruna'];tasks.filter(isActive).forEach(t=>{let ev=dueAt(t);if(!ev)return;let end=new Date(ev.getTime()+1800000);let stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';lines.push('BEGIN:VEVENT','UID:bruna-'+t.id+'@planner','DTSTAMP:'+stamp,'SUMMARY:'+t.text.replace(/,/g,'\\,'),'DTSTART:'+ev.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTEND:'+end.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','END:VEVENT')});lines.push('END:VCALENDAR');let a=document.createElement('a'),blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});a.href=URL.createObjectURL(blob);a.download='meu-planner-bruna.ics';a.click()}
