@@ -103,6 +103,13 @@ main{padding-top:25px}
 .item .taskActions .taskEdit{background:#fce9ef;color:var(--w)}
 .item .del{display:grid;place-items:center;width:35px;height:35px;top:13px;right:10px}
 @media(max-width:390px){.item{padding-right:44px}.item .meta{column-gap:5px}.item .tag,.item .rem,.item .t.taskTime{font-size:11px;padding:6px 8px}.item .taskActions>.small{padding:9px 11px}}
+
+/* iPhone: impede deslocamento horizontal da página, preservando rolagem vertical e filtros */
+html{width:100%;max-width:100%;overflow-x:hidden!important;overscroll-behavior-x:none}
+body{width:100%;max-width:100%;position:relative;overflow-x:clip!important;touch-action:pan-y;overscroll-behavior-x:none}
+main{max-width:100%;overflow-x:clip!important}
+.filters{max-width:100%;overscroll-behavior-x:contain;touch-action:pan-x;}
+@supports not (overflow:clip){body,main{overflow-x:hidden!important}}
 </style>
 </head>
 <body>
