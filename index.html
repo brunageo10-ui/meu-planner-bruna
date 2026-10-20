@@ -21,16 +21,63 @@
 .hero .micInside:active{background:#f3d5e0}
 .hero .actions{display:block}
 .hero .actions .primary{display:block;width:100%;min-height:50px}
+
+/* Redesign visual 2026-10-20; mantém handlers e lógica do Planner */
+:root{--bg:#fff9f6;--rose:#fceaf0;--line:#f0dce0;--mut:#847883;--w:#90133e;--w2:#401c2a;--sh:0 9px 26px rgba(108,48,67,.06)}
+html,body{background:radial-gradient(circle at 85% 0%,#fff0f2,transparent 40%),#fff9f6}
+main{padding-top:25px}
+.uiIcon{display:inline-block;vertical-align:middle;flex-shrink:0}
+.hello h1{font-family:Georgia,serif;color:var(--w);font-size:clamp(27px,6.5vw,33px);line-height:1.15}
+.hello p{font-size:13px;margin-top:7px}
+.round{display:grid;place-items:center;width:42px;height:42px;background:#fff3f6;border:0;color:var(--w)}
+.round .uiIcon{width:21px;height:21px}
+.hero,.panel,.item{background:#fff;border:1px solid #f0ddd9;border-radius:25px;box-shadow:var(--sh)}
+.hero{padding:13px 14px 16px}
+.hero .inputWrap{margin:0 0 12px;min-height:84px;padding:12px 75px 10px 16px;border-radius:21px;background:#fff}
+.hero .inputWrap textarea{min-height:61px;font-size:15px;resize:vertical}
+.hero .micInside{right:12px;top:14px;width:48px;height:48px;border-radius:50%;background:#fbe5ed;border:0;color:var(--w)}
+.hero .micInside .uiIcon{width:25px;height:25px}
+.hero .actions .primary{display:flex;justify-content:center;align-items:center;gap:10px;border-radius:18px;min-height:51px;font-size:15px}
+.hero .actions .primary .uiIcon{width:22px;height:22px}
+.micBox{margin:10px 0 13px;gap:12px;padding:10px 12px;background:#fff9fc;border:1px solid #f4cfe0;border-radius:19px}
+.micIcon{width:49px;height:49px;font-size:22px;box-shadow:none}
+.micIcon .uiIcon{width:25px;height:25px}
+.micText b{font-size:15px}.micText span{font-size:12px}
+.ver{font-size:10px;color:#9f949a;margin:10px 4px 0}
+.panel{padding:15px;margin:13px 0 14px}
+.todayHead{justify-content:flex-start;gap:10px}
+.todayHead b{font-size:18px;color:var(--w2)}
+.todayHead .subIcon{margin-left:auto;width:37px;height:37px;border-radius:13px;background:#fce9ef;color:var(--w);display:grid;place-items:center}
+.mini{border-radius:15px;min-height:43px;background:#fffafb;border-color:#f0e3e4}
+.stats{gap:7px;margin:13px 0 22px}
+.stat{background:#fff;border-radius:18px;padding:12px 4px 10px;min-height:92px;font-size:10px;gap:3px}
+.stat>.uiIcon{width:22px;height:22px;color:var(--w);background:#fdeaf0;border-radius:50%;padding:6px;box-sizing:content-box}
+.stat b{font-size:23px;line-height:1.15;color:var(--w)}
+.head{margin:18px 0 10px}
+.h h2{font-size:21px;font-weight:780;letter-spacing:-.3px}
+.sectionIcon{color:var(--w);display:grid;place-items:center}.sectionIcon .uiIcon{width:25px;height:25px}
+#foldersBtn{display:flex;gap:6px;align-items:center;justify-content:center;font-size:12px;padding:10px 12px;background:#fceaf0}
+#foldersBtn .uiIcon{width:17px;height:17px}
+.chip{border-radius:999px;font-size:13px;padding:9px 13px}
+.chip.on{background:var(--w)}
+.sub{font-size:12px;margin:3px 0 12px}
+.item{padding-top:17px;padding-bottom:16px}
+.item .text{font-size:16px;line-height:1.25}
+.item .tag,.item .rem,.item .prioTag{border-radius:999px}
+.item .tag{background:#fdebf0}
+.del{background:#faeaf0;border-radius:50%;color:var(--w)}
+.small{font-size:12px}
+@media(max-width:390px){.stats{gap:5px}.stat{padding:9px 2px;font-size:9px}.h h2{font-size:20px}#foldersBtn{font-size:11px}.hero{padding:12px}}
 </style>
 </head>
 <body>
-<main id="top"><div class="top"><div class="hello"><h1>Olá, Bruna! 👋</h1><p>Escreva ou fale. Eu organizo para você.</p></div><div class="topBtns"><button class="round" id="searchBtn">⌕</button><button class="round" id="settingsBtn">⚙️</button></div></div>
-<section class="hero"><div class="heroTitle">✦ O que você precisa lembrar ou fazer?</div><div class="inputWrap"><textarea id="input" aria-label="Escreva ou fale sua tarefa" placeholder="Escreva ou fale sua tarefa..."></textarea><button type="button" class="btn micInside" id="voice" aria-label="Falar tarefa" title="Falar tarefa">🎙️</button></div><div class="micBox" id="micBox"><div class="micIcon">🎙️</div><div class="micText"><b id="micTitle">Ditado pronto</b><span id="micHint">Toque no microfone do teclado do iPhone para falar.</span></div></div><div class="actions"><button type="button" class="btn primary" id="add">✨ Organizar automaticamente</button></div><div class="ver" id="versionLine">Versão 14.1 • Base estável restaurada.</div></section>
+<main id="top"><div class="top"><div class="hello"><h1>Olá, Bruna! 👋</h1><p>Escreva ou fale. Eu organizo para você.</p></div><div class="topBtns"><button class="round" id="searchBtn" aria-label="Buscar"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button><button class="round" id="settingsBtn" aria-label="Ajustes"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .32 1.77l.05.05-2.1 2.1-.06-.05a1.6 1.6 0 0 0-1.77-.32l-.08.04a1.6 1.6 0 0 0-.95 1.46V21h-3v-.08a1.6 1.6 0 0 0-1.02-1.5 1.6 1.6 0 0 0-1.76.33l-.06.05-2.1-2.1.05-.06a1.6 1.6 0 0 0 .32-1.77l-.03-.08A1.6 1.6 0 0 0 5.75 15H5v-3h.75a1.6 1.6 0 0 0 1.5-1.02 1.6 1.6 0 0 0-.33-1.76l-.05-.06 2.1-2.1.06.05a1.6 1.6 0 0 0 1.77.32l.08-.03A1.6 1.6 0 0 0 12 5.92V5h3v.92a1.6 1.6 0 0 0 1.02 1.5 1.6 1.6 0 0 0 1.76-.33l.06-.05 2.1 2.1-.05.06a1.6 1.6 0 0 0-.32 1.77l.03.08A1.6 1.6 0 0 0 21.08 12H22v3h-.92a1.6 1.6 0 0 0-1.5 1.02z"/></svg></button></div></div>
+<section class="hero"><div class="inputWrap"><textarea id="input" aria-label="Escreva ou fale sua tarefa" placeholder="Escreva ou fale sua tarefa..."></textarea><button type="button" class="btn micInside" id="voice" aria-label="Falar tarefa" title="Falar tarefa"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg></button></div><div class="micBox" id="micBox"><div class="micIcon"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg></div><div class="micText"><b id="micTitle">Ditado pronto</b><span id="micHint">Toque no microfone do teclado do iPhone para falar.</span></div></div><div class="actions"><button type="button" class="btn primary" id="add"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7zM19 17l.7 2.3L22 20l-2.3.7L19 23l-.7-2.3L16 20l2.3-.7z"/></svg> Organizar automaticamente</button></div><div class="ver" id="versionLine">Versão 14.1 • Base estável restaurada.</div></section>
 <section class="panel search" id="searchPanel"><b>🔎 Buscar tarefas</b><button type="button" class="del" id="closeSearch">×</button><input id="searchInput" placeholder="Digite: prova, vinho, boleto, tour..."><div class="note">Procura em tarefas, rotinas, histórico e pastas.</div><div id="searchResults"><div class="result">Digite uma palavra para buscar.</div></div></section>
-<section class="panel"><div class="todayHead"><div><b>Agenda de hoje</b><small id="todayLabel"></small></div><span>☀️</span></div><div id="todayList"></div></section>
-<div class="stats"><div class="stat">☀️<b id="todayCount">0</b>Hoje</div><div class="stat">🎓<b id="schoolCount">0</b>Escola</div><div class="stat">☑️<b id="taskCount">0</b>Tarefas pendentes</div><div class="stat">🔁<b id="routineCount">0</b>Rotinas ativas</div></div>
-<div class="head"><div class="h"><span>📁</span><h2>Organização</h2></div><button type="button" class="small" id="foldersBtn">✎ Gerenciar pastas</button></div><div class="filters" id="filters"></div>
-<div class="head"><div><div class="h"><span>✅</span><h2>Minhas tarefas</h2></div><p class="sub">Atividades pontuais e lembretes únicos.</p></div></div><div id="taskList"></div>
+<section class="panel"><div class="todayHead"><div><b>Agenda de hoje</b><small id="todayLabel"></small></div><span class="subIcon"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg></span></div><div id="todayList"></div></section>
+<div class="stats"><div class="stat"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><b id="todayCount">0</b>Hoje</div><div class="stat"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5-10-5zM6 11v6c4 3 8 3 12 0v-6M22 9v7"/></svg><b id="schoolCount">0</b>Escola</div><div class="stat"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><b id="taskCount">0</b>Tarefas pendentes</div><div class="stat"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"/></svg><b id="routineCount">0</b>Rotinas ativas</div></div>
+<div class="head"><div class="h"><span class="sectionIcon"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg></span><h2>Organização</h2></div><button type="button" class="small" id="foldersBtn"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg> Gerenciar pastas</button></div><div class="filters" id="filters"></div>
+<div class="head"><div><div class="h"><span class="sectionIcon"><svg class="uiIcon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></svg></span><h2>Minhas tarefas</h2></div><p class="sub">Atividades pontuais e lembretes únicos.</p></div></div><div id="taskList"></div>
 <details class="fold" id="routineBox"><summary><span>🔁 Minhas rotinas<small>Toque para abrir</small></span><span class="count" id="routineMini">0</span></summary><div id="routineList"></div></details>
 <details class="fold" id="historyBox"><summary><span>🕘 Histórico<small>Toque para abrir</small></span><span class="count" id="historyMini">0</span></summary><div id="doneList"></div></details>
 <details class="tools"><summary><span>🛠️ Ferramentas</span><small>Toque para abrir</small></summary><div class="features"><button type="button" class="feature" id="notifyBtn">🔔 Notificações<br><b>ativar</b></button><button type="button" class="feature" id="calendarBtn">📅 Calendário<br>iPhone/Google</button><button type="button" class="feature" id="backupBtn">💾 Backup<br>salvar tarefas</button><button type="button" class="feature" id="importBtn">📥 Importar<br>backup</button></div><input type="file" id="backupFile" accept="application/json" hidden><div class="note" id="notifyStatus">Toque em Notificações para permitir avisos.</div></details>
