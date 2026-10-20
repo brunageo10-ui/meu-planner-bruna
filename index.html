@@ -172,8 +172,52 @@ function findFolderByName(n){let x=norm(n);return folders.find(c=>norm(label(c))
 function backup(){let a=document.createElement('a'),blob=new Blob([JSON.stringify({version:VERSION,tasks,folders,catNames},null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='meu-planner-bruna-backup-'+dk()+'.json';a.click()}function importBackup(f){if(!f)return;let r=new FileReader();r.onload=()=>{let d=JSON.parse(r.result);if(Array.isArray(d.tasks)){tasks=d.tasks;folders=[...DEFAULT];(d.folders||[]).forEach(x=>{if(x&&!folders.includes(x))folders.push(x)});catNames=d.catNames||{};localStorage.brunaTasks=JSON.stringify(tasks);localStorage.brunaFolders=JSON.stringify(folders);localStorage.brunaCategoryNames=JSON.stringify(catNames);render();toast('Backup importado.')}};r.readAsText(f)}
 window.OneSignalDeferred=window.OneSignalDeferred||[];window.oneSignalReady=new Promise(res=>{window.OneSignalDeferred.push(async O=>{await O.init({appId:APP_ID,serviceWorkerParam:{scope:'./'},serviceWorkerPath:'OneSignalSDKWorker.js'});res(O)})});function shouldSchedule(t){return !t.done&&!t.paused&&(t.recurrence||t.time)}async function getSub(){let O=await oneSignalReady;if(Notification.permission!=='granted')throw Error('Permita as notificações em Ferramentas.');try{await O.User.PushSubscription.optIn()}catch(e){}for(let i=0;i<10;i++){let id=O.User?.PushSubscription?.id;if(id)return id;await new Promise(r=>setTimeout(r,500))}throw Error('Abra pela Tela Inicial e ative as notificações.')}async function scheduleRemote(t){try{if(!shouldSchedule(t))return;if(!('Notification'in window)||Notification.permission!=='granted'){render();return}let s=scheduled();if(s[t.id])return;let ev=dueAt(t);if(!ev&&t.recurrence){ev=todayAt(t.time||'08:00');if(ev<Date.now())ev.setDate(ev.getDate()+1)}if(!ev||ev<Date.now()+90000){toast('⏰ Horário muito próximo. Use pelo menos 2 minutos de antecedência.');render();return}let sub=await getSub();let r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:t.text,sendAfter:ev.toISOString()})});let j={};try{j=await r.json()}catch(e){}if(!r.ok)throw Error('servidor não confirmou');s[t.id]={sendAt:ev.toISOString(),notificationId:j.id||j.notification_id||''};saveScheduled(s);toast('🔔 Aviso agendado para '+(t.time||''));render()}catch(e){toast('Tarefa salva, mas aviso não foi agendado: '+e.message);render()}}
 async function enableNotify(){try{let O=await oneSignalReady;await O.Notifications.requestPermission();await getSub();E.notifyStatus.textContent='✅ Notificações autorizadas.';E.notifyBtn.innerHTML='🔔 Notificações<br><b>ativadas</b>';toast('Notificações ativadas.');for(const t of tasks.filter(isActive))await scheduleRemote(t)}catch(e){toast(e.message)}}async function reschedule(id){let t=tasks.find(x=>x.id==id);if(t)await scheduleRemote(t)}
-function exportCalendar(){let lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Meu Planner Bruna//PT-BR','CALSCALE:GREGORIAN','X-WR-CALNAME:Meu Planner — Bruna'];tasks.filter(isActive).forEach(t=>{let ev=dueAt(t);if(!ev)return;let end=new Date(ev.getTime()+1800000);let stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';lines.push('BEGIN:VEVENT','UID:bruna-'+t.id+'@planner','DTSTAMP:'+stamp,'SUMMARY:'+t.text.replace(/,/g,'\\,'),'DTSTART:'+ev.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTEND:'+end.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','END:VEVENT')});lines.push('END:VCALENDAR');let a=document.createElement('a'),blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});a.href=URL.createObjectURL(blob);a.download='meu-planner-bruna.ics';a.click()}
+function agendarCalendario() {
+  const eventos = tasks.filter(t => !t.done && !t.paused && t.date && t.time);
+  if (!eventos.length) {
+    alert('Cadastre um compromisso com data e horário primeiro.');
+    return;
+  }
+  const lista = eventos.slice(0, 20).map((t, i) =>
+    `${i + 1} - ${t.text} (${t.date} às ${t.time})`
+  ).join('\n');
+  const escolha = prompt('Qual compromisso deseja agendar?\n' + lista);
+  if (escolha === null) return;
+  const indice = Number(escolha) - 1;
+  if (!Number.isInteger(indice) || indice < 0 || indice >= Math.min(eventos.length, 20)) return;
+  const t = eventos[indice];
+  const inicio = new Date(`${t.date}T${t.time}:00`);
+  if (Number.isNaN(inicio.getTime())) return alert('Data ou horário inválido.');
+  const fim = new Date(inicio.getTime() + 30 * 60000);
+  const formato = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const destino = prompt('Onde deseja adicionar?\n1 - Calendário do iPhone\n2 - Google Agenda\n3 - Ambos');
+  if (!['1', '2', '3'].includes(destino)) return;
+  if (destino === '2' || destino === '3') {
+    const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+      + '&text=' + encodeURIComponent(t.text)
+      + '&dates=' + formato(inicio) + '%2F' + formato(fim);
+    window.open(url, '_blank', 'noopener');
+  }
+  if (destino === '1' || destino === '3') {
+    const escapar = s => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
+      .replace(/,/g, '\\,').replace(/;/g, '\\;');
+    const linhas = ['BEGIN:VCALENDAR', 'VERSION:2.0',
+      'PRODID:-//Meu Planner Bruna//PT-BR', 'BEGIN:VEVENT',
+      'UID:planner-' + t.id + '@bruna', 'DTSTAMP:' + formato(new Date()),
+      'DTSTART:' + formato(inicio), 'DTEND:' + formato(fim),
+      'SUMMARY:' + escapar(t.text), 'END:VEVENT', 'END:VCALENDAR'];
+    const url = URL.createObjectURL(new Blob([linhas.join('\r\n')], {type: 'text/calendar;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'compromisso-planner.ics';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+}
+  function exportCalendar(){let lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Meu Planner Bruna//PT-BR','CALSCALE:GREGORIAN','X-WR-CALNAME:Meu Planner — Bruna'];tasks.filter(isActive).forEach(t=>{let ev=dueAt(t);if(!ev)return;let end=new Date(ev.getTime()+1800000);let stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';lines.push('BEGIN:VEVENT','UID:bruna-'+t.id+'@planner','DTSTAMP:'+stamp,'SUMMARY:'+t.text.replace(/,/g,'\\,'),'DTSTART:'+ev.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','DTEND:'+end.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z','END:VEVENT')});lines.push('END:VCALENDAR');let a=document.createElement('a'),blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});a.href=URL.createObjectURL(blob);a.download='meu-planner-bruna.ics';a.click()}
 function lockX(){try{document.documentElement.style.overflowX='hidden';document.body.style.overflowX='hidden';if(window.scrollX)window.scrollTo(0,window.scrollY)}catch(e){}}
-E.add.addEventListener('click',addTask);E.add.addEventListener('touchend',addTask,{passive:false});E.voice.onclick=startDictation;E.searchBtn.onclick=()=>{E.searchPanel.classList.add('open');E.searchInput.focus();renderSearch()};E.closeSearch.onclick=()=>E.searchPanel.classList.remove('open');E.searchInput.oninput=renderSearch;E.foldersBtn.onclick=editFolders;E.backupBtn.onclick=backup;E.importBtn.onclick=()=>E.backupFile.click();E.backupFile.onchange=e=>importBackup(e.target.files[0]);E.notifyBtn.onclick=enableNotify;E.calendarBtn.onclick=exportCalendar;E.settingsBtn.onclick=()=>toast('⚙️ Ajustes: use Gerenciar pastas e Ferramentas.');E.navHome.onclick=()=>{window.scrollTo({top:0,left:0,behavior:'smooth'});document.documentElement.scrollTop=0;document.body.scrollTop=0};E.navPlus.onclick=()=>{E.input.focus();scrollTo({top:0,behavior:'smooth'})};E.navCalendar.onclick=exportCalendar;E.navStats.onclick=()=>{location.href='gastos.html'};E.navProfile.onclick=E.settingsBtn.onclick;document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')addTask(e)});document.addEventListener('touchend',lockX,{passive:true});window.addEventListener('resize',lockX,{passive:true});setInterval(lockX,1500);E.versionLine.textContent='Versão 14.1 • Base estável restaurada.';render();
+E.add.addEventListener('click',addTask);E.add.addEventListener('touchend',addTask,{passive:false});E.voice.onclick=startDictation;E.searchBtn.onclick=()=>{E.searchPanel.classList.add('open');E.searchInput.focus();renderSearch()};E.closeSearch.onclick=()=>E.searchPanel.classList.remove('open');E.searchInput.oninput=renderSearch;E.foldersBtn.onclick=editFolders;E.backupBtn.onclick=backup;E.importBtn.onclick=()=>E.backupFile.click();E.backupFile.onchange=e=>importBackup(e.target.files[0]);E.notifyBtn.onclick=enableNotify;E.calendarBtn.onclick=agendarCalendario;E.settingsBtn.onclick=()=>toast('⚙️ Ajustes: use Gerenciar pastas e Ferramentas.');E.navHome.onclick=()=>{window.scrollTo({top:0,left:0,behavior:'smooth'});document.documentElement.scrollTop=0;document.body.scrollTop=0};E.navPlus.onclick=()=>{E.input.focus();scrollTo({top:0,behavior:'smooth'})};E.navCalendar.onclick=agendarCalendario;E.navStats.onclick=()=>{location.href='gastos.html'};E.navProfile.onclick=E.settingsBtn.onclick;document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')addTask(e)});document.addEventListener('touchend',lockX,{passive:true});window.addEventListener('resize',lockX,{passive:true});setInterval(lockX,1500);E.versionLine.textContent='Versão 14.1 • Base estável restaurada.';render();
 </script>
 </body></html>
