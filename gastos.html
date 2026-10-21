@@ -18,6 +18,51 @@
 .groupRight{text-align:right;flex-shrink:0}.groupRight .money{font-size:19px}.groupChevron{display:block;font-size:18px;color:#8a1238}
 .expenseGroup[open] .groupChevron{transform:rotate(180deg)}
 .groupEntries{border-top:1px solid #eadbd2;padding:0 12px}.groupEntry{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 3px;border-bottom:1px solid #f2e7e2}.groupEntry:last-child{border-bottom:0}.groupEntry .money{margin-top:5px;font-size:16px}
+
+/* Design padronizado com a página inicial do Meu Planner */
+:root{--sh:0 9px 22px rgba(82,44,37,.07)}
+html,body{overscroll-behavior-x:none;touch-action:pan-y}
+main{padding-bottom:max(42px,env(safe-area-inset-bottom))}
+.top{align-items:center;margin-bottom:17px}
+.hello{flex:1;min-width:0}
+.hello h1{font-size:clamp(24px,6vw,29px);line-height:1.15;letter-spacing:-.5px}
+.hello p{font-size:13px;line-height:1.35}
+.round{flex:0 0 40px;display:grid;place-items:center;font-size:24px}
+.card{padding:15px;margin:11px 0;border-radius:22px}
+.title{font-size:18px;letter-spacing:-.25px;margin-bottom:12px}
+.quick{align-items:center;gap:10px;padding:12px;border-radius:17px}
+.quick input{min-width:0;font-size:16px}
+.btn{min-height:43px;font-size:14px;border-radius:15px;line-height:1.25}
+.field input,.field select{min-height:44px;font-size:16px}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{min-width:0;padding:13px 5px;border-radius:16px;font-size:12px;line-height:1.4}
+.stat b{font-size:clamp(14px,3.7vw,19px);overflow-wrap:anywhere;margin-top:4px}
+.listHead{align-items:center;flex-wrap:wrap;gap:10px}
+.listHead h2{font-size:21px;color:var(--w2);letter-spacing:-.3px}
+.listHead>div{display:flex;flex-wrap:wrap;gap:6px}
+.small{margin:0;font-size:13px}
+.expenseGroup{border-radius:18px;box-shadow:var(--sh)}
+.expenseGroup>summary{padding:13px 14px;min-height:66px}
+.groupName{font-size:16px}
+.groupRight .money{font-size:17px}
+.groupEntries{padding:0 11px}
+.groupEntry{gap:9px;min-width:0}
+.groupEntry>div{min-width:0}
+.groupEntry .money{font-size:15px}
+@media(max-width:390px){
+  main{padding-left:14px;padding-right:14px}
+  .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .monthBar{grid-template-columns:minmax(0,1fr) auto}
+  .listHead{flex-direction:row;align-items:center}
+}
+@media(max-width:350px){
+  .row,.actions,.monthBar{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .hello h1{font-size:23px}
+}
+
 </style>
 </head>
 <body>
