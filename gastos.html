@@ -63,6 +63,32 @@ main{padding-bottom:max(42px,env(safe-area-inset-bottom))}
   .hello h1{font-size:23px}
 }
 
+
+/* Reformulação financeira: visão geral primeiro, registros depois */
+body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
+.top{margin-bottom:18px}
+.hello h1{color:var(--w);font-size:clamp(25px,6.5vw,32px)}
+.card{background:#fff;border-color:#f0d7df;border-radius:23px;box-shadow:0 8px 20px rgba(113,30,56,.045)}
+.monthCard{padding:13px 15px}
+.monthCard .title{font-size:16px;margin-bottom:6px}
+.monthCard .field label{display:none}
+.monthCard .hint{margin-bottom:0}
+.summaryCard{background:linear-gradient(145deg,#fff,#fff5f8);padding:17px 14px}
+.summaryCard .title{font-size:21px;margin-bottom:13px;color:var(--w)}
+.summaryCard .stats{gap:8px}
+.summaryCard .stat{border-color:#f3d8e1;background:#fff;min-height:92px;display:flex;flex-direction:column;justify-content:center;gap:7px}
+.summaryCard .stat b{font-size:clamp(14px,3.9vw,20px);line-height:1.2}
+.entryIntro{margin:23px 2px 9px}
+.entryIntro h2{font-size:21px;letter-spacing:-.4px;margin:0;color:var(--w2)}
+.entryIntro p{margin:5px 0 0;color:var(--mut);font-size:13px}
+.entryCard{margin:10px 0;padding:15px}
+.entryCard .title{font-size:17px}
+.entryCard .hint{font-size:12px}
+.entryCard .quick{margin-bottom:10px}
+.entryCard .toggle button{min-height:45px}
+.closingCard{margin-top:17px}
+@media(max-width:390px){.summaryCard .stat{min-height:84px;padding:10px 3px}.summaryCard .stat b{font-size:clamp(12px,3.8vw,17px)}}
+
 </style>
 </head>
 <body>
@@ -72,14 +98,23 @@ main{padding-bottom:max(42px,env(safe-area-inset-bottom))}
     <button class="round" onclick="location.href='index.html'">⌂</button>
   </div>
 
-  <section class="card">
+  <section class="card monthCard">
+    <div class="title">Mês de análise</div>
+    <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
+    <div class="hint" id="monthLabel"></div>
+  </section>
+  <section class="card summaryCard">
+    <div class="title">Resumo do mês</div>
+    <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
+  </section>
+  <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
+  <section class="card entryCard">
     <div class="title">Lançamento rápido</div>
     <div class="quick"><span>✎</span><input id="quickText" placeholder="Ex.: 150 gasolina, recebi 250 passeio, entrou 1500 salário"></div>
     <div class="actions"><button class="btn" id="voiceBtn">🎙️ Falar</button><button class="btn primary" id="quickBtn">✨ Organizar</button></div>
     <div class="hint">Para dinheiro que entra, use palavras como <b>recebi</b>, <b>recebido</b>, <b>entrou</b>, <b>entrada</b>, <b>ganhei</b> ou <b>salário</b>. Ex.: <b>entrou 1500 salário</b>.</div>
   </section>
-
-  <section class="card">
+  <section class="card entryCard">
     <div class="title">Adicionar manualmente</div>
     <div class="toggle"><button id="saidaBtn" data-type="saida" class="on">💸 Gasto</button><button id="entradaBtn" data-type="entrada">💰 Entrada</button></div>
     <div class="row"><div class="field"><label>Valor</label><input id="valor" inputmode="decimal" placeholder="R$ 0,00"></div><div class="field"><label>Data</label><input id="data" type="date"></div></div>
@@ -87,26 +122,13 @@ main{padding-bottom:max(42px,env(safe-area-inset-bottom))}
     <div class="row"><div class="field"><label>Categoria</label><select id="cat"><option>Casa</option><option>Alimentação</option><option>Transporte</option><option>Escola</option><option>SGS Vinho & Café</option><option>Saúde</option><option>Lazer</option><option>Recebimentos</option><option>Outros</option></select></div><div class="field"><label>Forma</label><select id="forma"><option>Pix</option><option>Cartão</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Outro</option></select></div></div>
     <button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
   </section>
-
-  <section class="card">
-    <div class="title">Mês de análise</div>
-    <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
-    <div class="hint" id="monthLabel"></div>
-  </section>
-
-  <section class="card">
-    <div class="title">Resumo do mês</div>
-    <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
-  </section>
-
-  <section class="card">
+  <section class="card closingCard">
     <div class="title">Fechamento do mês</div>
     <div class="closeBox" id="fechamentoBox"></div>
     <div class="catGrid" id="catResumo"></div>
     <div class="actions" style="margin-top:10px"><button class="btn gold" id="fecharBtn">📌 Salvar fechamento</button><button class="btn" id="csvMesBtn">Exportar mês</button></div>
     <div class="hint" id="fechamentoStatus">Nenhum fechamento salvo para este mês.</div>
   </section>
-
   <div class="listHead"><h2>Lançamentos do mês</h2><div><button class="small" id="csvBtn">CSV geral</button> <button class="small" id="backupBtn">Backup</button></div></div>
   <div id="list"></div>
 </main>
