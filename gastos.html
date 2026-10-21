@@ -89,6 +89,17 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .closingCard{margin-top:17px}
 @media(max-width:390px){.summaryCard .stat{min-height:84px;padding:10px 3px}.summaryCard .stat b{font-size:clamp(12px,3.8vw,17px)}}
 
+
+/* Formulários recolhíveis para priorizar o resumo e os lançamentos */
+.entryAccordion{padding:0;overflow:hidden}
+.entryAccordion>.accordionHeading{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 16px;cursor:pointer;color:var(--w2);font-weight:850;font-size:17px;min-height:58px}
+.entryAccordion>.accordionHeading::-webkit-details-marker{display:none}
+.entryAccordion>.accordionHeading .accordionChevron{font-size:25px;color:var(--w);line-height:1;transition:transform .18s}
+.entryAccordion[open]>.accordionHeading .accordionChevron{transform:rotate(180deg)}
+.entryAccordion>.accordionBody{padding:0 15px 15px}
+.entryAccordion[open]>.accordionHeading{padding-bottom:11px}
+.entryAccordion>.accordionHeading:focus-visible{outline:3px solid var(--w);outline-offset:-4px}
+
 </style>
 </head>
 <body>
@@ -108,20 +119,26 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
   </section>
   <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
-  <section class="card entryCard">
-    <div class="title">Lançamento rápido</div>
+  <details class="card entryCard entryAccordion" open>
+    <summary class="accordionHeading"><span>✍️ Lançamento rápido</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
+    <div class="accordionBody">
+    
     <div class="quick"><span>✎</span><input id="quickText" placeholder="Ex.: 150 gasolina, recebi 250 passeio, entrou 1500 salário"></div>
     <div class="actions"><button class="btn" id="voiceBtn">🎙️ Falar</button><button class="btn primary" id="quickBtn">✨ Organizar</button></div>
     <div class="hint">Para dinheiro que entra, use palavras como <b>recebi</b>, <b>recebido</b>, <b>entrou</b>, <b>entrada</b>, <b>ganhei</b> ou <b>salário</b>. Ex.: <b>entrou 1500 salário</b>.</div>
-  </section>
-  <section class="card entryCard">
-    <div class="title">Adicionar manualmente</div>
+    </div>
+  </details>
+  <details class="card entryCard entryAccordion" >
+    <summary class="accordionHeading"><span>🧾 Adicionar manualmente</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
+    <div class="accordionBody">
+    
     <div class="toggle"><button id="saidaBtn" data-type="saida" class="on">💸 Gasto</button><button id="entradaBtn" data-type="entrada">💰 Entrada</button></div>
     <div class="row"><div class="field"><label>Valor</label><input id="valor" inputmode="decimal" placeholder="R$ 0,00"></div><div class="field"><label>Data</label><input id="data" type="date"></div></div>
     <div class="field"><label>Descrição</label><input id="desc" placeholder="Gasolina, mercado, cliente, salário..."></div>
     <div class="row"><div class="field"><label>Categoria</label><select id="cat"><option>Casa</option><option>Alimentação</option><option>Transporte</option><option>Escola</option><option>SGS Vinho & Café</option><option>Saúde</option><option>Lazer</option><option>Recebimentos</option><option>Outros</option></select></div><div class="field"><label>Forma</label><select id="forma"><option>Pix</option><option>Cartão</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Outro</option></select></div></div>
     <button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
-  </section>
+    </div>
+  </details>
   <section class="card closingCard">
     <div class="title">Fechamento do mês</div>
     <div class="closeBox" id="fechamentoBox"></div>
