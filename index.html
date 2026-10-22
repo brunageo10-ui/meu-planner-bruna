@@ -168,6 +168,15 @@ main{max-width:100%;overflow-x:clip!important}
 .spotlightTitle{color:#8a1238;font-weight:850;font-size:16px;margin-bottom:7px}
 .spotlightBox strong{display:block;font-size:18px}
 .spotlightWhen{font-size:13px;color:#7c6a73;margin-top:4px}
+
+/* Seletor de lembrete por toque, sem teclado */
+.reminderOverlay{position:fixed;inset:0;z-index:99999;background:rgba(32,16,25,.55);display:flex;align-items:center;justify-content:center;padding:18px}
+.reminderPanel{width:min(100%,400px);max-height:85dvh;overflow-y:auto;background:#fffafc;border-radius:22px;padding:20px;box-shadow:0 16px 45px #30121d40;color:#401c2a}
+.reminderPanel h2{font-size:19px;line-height:1.3;margin:0 0 7px}
+.reminderDescription{font-size:13px;color:#786b72;margin:0 0 14px;overflow-wrap:anywhere}
+.reminderOption{display:block;width:100%;padding:13px 15px;margin:7px 0;border:1px solid #f0d3df;border-radius:14px;background:#fce9ef;color:#90133e;font-size:15px;font-weight:750;text-align:left;cursor:pointer}
+.reminderOption.selected{border:2px solid #90133e;background:#f7dce5}
+.reminderCancel{display:block;margin:11px auto 0;padding:10px 18px;border:0;background:transparent;color:#786b72;font-size:15px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -211,7 +220,20 @@ function reminderTag(t){if(!t.time||t.done)return'';let ev=dueAt(t);if(ev&&ev.ge
 function renderToday(){renderChecklistSpotlight();E.todayLabel.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});let today=dk(),items=[];tasks.filter(isActive).forEach(t=>{if(isRoutine(t)){if(routineToday(t))items.push({id:t.id,text:t.text,time:t.time||'08:00',cat:t.cat,routine:true,stamp:todayAt(t.time||'08:00').getTime()});return}let ev=dueAt(t);if(t.date===today||(ev&&dk(ev)===today))items.push({id:t.id,text:t.text,time:t.time||'Hoje',cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()})});items=items.sort((a,b)=>a.stamp-b.stamp);E.todayList.innerHTML=items.length?items.map(x=>`<div class="mini"><span class="timeMini">${esc(x.time)}</span><div class="miniMain"><div class="miniText">${esc(x.text)}</div><div class="miniCat">${x.routine?'Rotina • ':''}${esc(label(x.cat))}</div></div></div>`).join(''):'<div class="mini"><div class="miniText">Nada marcado para hoje. Ótimo respiro 🌿</div></div>'}
 function reminderMinutes(t){return [0,10,30,60,120,1440].includes(Number(t.reminderMinutes))?Number(t.reminderMinutes):60}
 function reminderLabel(t){const n=reminderMinutes(t);return n===0?'No horário':n===1440?'1 dia antes':n===60?'1 hora antes':n===120?'2 horas antes':n+' minutos antes'}
-function editReminder(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;const escolha=prompt('Quando avisar sobre "'+t.text+'"?\n0 - No horário\n10 - 10 minutos antes\n30 - 30 minutos antes\n60 - 1 hora antes (padrão)\n120 - 2 horas antes\n1440 - 1 dia antes\n\nDigite o número de minutos:',String(reminderMinutes(t)));if(escolha===null)return;const n=Number(escolha.trim());if(![0,10,30,60,120,1440].includes(n))return alert('Escolha 0, 10, 30, 60, 120 ou 1440.');t.reminderMinutes=n;saveTasks();const s=scheduled();if(s[t.id]){delete s[t.id];saveScheduled(s);toast('Preferência salva. Um aviso antigo pode continuar ativo.');}else toast('Lembrete configurado.');scheduleRemote(t);}
+function editReminder(id){
+ const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;
+ document.getElementById('reminderChoiceModal')?.remove();
+ const overlay=document.createElement('div');overlay.id='reminderChoiceModal';overlay.className='reminderOverlay';
+ const panel=document.createElement('div');panel.className='reminderPanel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Escolher horário do lembrete');
+ const heading=document.createElement('h2');heading.textContent='🔔 Quando deseja ser avisada?';panel.appendChild(heading);
+ const description=document.createElement('p');description.textContent=t.text;description.className='reminderDescription';panel.appendChild(description);
+ const options=[[0,'No horário'],[10,'10 minutos antes'],[30,'30 minutos antes'],[60,'1 hora antes (padrão)'],[120,'2 horas antes'],[1440,'1 dia antes']];
+ const close=()=>overlay.remove();
+ options.forEach(([minutes,label])=>{const btn=document.createElement('button');btn.type='button';btn.className='reminderOption'+(reminderMinutes(t)===minutes?' selected':'');btn.textContent=(reminderMinutes(t)===minutes?'✓  ':'')+label;btn.onclick=()=>{close();if(reminderMinutes(t)===minutes)return;t.reminderMinutes=minutes;saveTasks();const s=scheduled();if(s[t.id]){delete s[t.id];saveScheduled(s);toast('Novo horário salvo. Um aviso anterior pode continuar ativo.');}else toast('Lembrete: '+reminderLabel(t));scheduleRemote(t)};panel.appendChild(btn)});
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='reminderCancel';cancel.textContent='Cancelar';cancel.onclick=close;panel.appendChild(cancel);
+ overlay.onclick=e=>{if(e.target===overlay)close()};overlay.appendChild(panel);document.body.appendChild(overlay);
+}
+
 function checklistItems(t){return Array.isArray(t.checklist)?t.checklist:[]}
 function editChecklist(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;const atual=checklistItems(t).map(x=>x.text).join('\n');const entrada=prompt('Checklist de '+t.text+'\nEscreva um item por linha. Você pode acrescentar documentos, objetos e coisas para fazer:',atual);if(entrada===null)return;const nomes=entrada.split(/\n/).map(x=>x.trim()).filter(Boolean).slice(0,40);const antigos=checklistItems(t);t.checklist=nomes.map((name,i)=>({id:i+1,text:name,done:!!antigos.find(x=>x.text===name&&x.done)}));saveTasks();toast('Checklist salvo!');}
 function markChecklist(id,index,checked){const t=tasks.find(x=>String(x.id)===String(id));if(!t||!checklistItems(t)[index])return;t.checklist[index].done=checked;saveTasks();}
