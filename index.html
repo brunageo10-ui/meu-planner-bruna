@@ -177,6 +177,17 @@ main{max-width:100%;overflow-x:clip!important}
 .reminderOption{display:block;width:100%;padding:13px 15px;margin:7px 0;border:1px solid #f0d3df;border-radius:14px;background:#fce9ef;color:#90133e;font-size:15px;font-weight:750;text-align:left;cursor:pointer}
 .reminderOption.selected{border:2px solid #90133e;background:#f7dce5}
 .reminderCancel{display:block;margin:11px auto 0;padding:10px 18px;border:0;background:transparent;color:#786b72;font-size:15px;cursor:pointer}
+
+/* Editor de checklist multilinha: Enter cria uma nova linha, nunca salva */
+.checklistEditorOverlay{position:fixed;inset:0;z-index:99999;background:rgba(32,16,25,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.checklistEditorPanel{width:min(100%,430px);max-height:90dvh;overflow:auto;background:#fffafc;border-radius:22px;padding:20px;box-shadow:0 16px 45px #30121d40;color:#401c2a}
+.checklistEditorPanel h2{font-size:21px;margin:0 0 7px}
+.checklistEditorPanel p{font-size:14px;line-height:1.5;color:#786b72;margin:0 0 14px}
+.checklistEditorArea{display:block;width:100%;box-sizing:border-box;min-height:190px;max-height:48dvh;resize:vertical;border:1px solid #e5cbd5;border-radius:13px;background:#fff;padding:13px;font-size:16px;line-height:1.6;font-family:inherit;color:#401c2a;outline-color:#8a1238}
+.checklistEditorFooter{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:14px}
+.checklistEditorCancel,.checklistEditorSave{padding:12px 15px;border-radius:12px;font-size:15px;font-weight:750;cursor:pointer}
+.checklistEditorCancel{border:1px solid #eddce2;background:white;color:#7a6070}
+.checklistEditorSave{border:0;background:#8a1238;color:white}
 </style>
 </head>
 <body>
@@ -235,7 +246,21 @@ function editReminder(id){
 }
 
 function checklistItems(t){return Array.isArray(t.checklist)?t.checklist:[]}
-function editChecklist(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;const atual=checklistItems(t).map(x=>x.text).join('\n');const entrada=prompt('Checklist de '+t.text+'\nEscreva um item por linha. Você pode acrescentar documentos, objetos e coisas para fazer:',atual);if(entrada===null)return;const nomes=entrada.split(/\n/).map(x=>x.trim()).filter(Boolean).slice(0,40);const antigos=checklistItems(t);t.checklist=nomes.map((name,i)=>({id:i+1,text:name,done:!!antigos.find(x=>x.text===name&&x.done)}));saveTasks();toast('Checklist salvo!');}
+function editChecklist(id){
+ const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;
+ document.getElementById('checklistEditorModal')?.remove();
+ const overlay=document.createElement('div');overlay.id='checklistEditorModal';overlay.className='checklistEditorOverlay';
+ const panel=document.createElement('div');panel.className='checklistEditorPanel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Editar checklist');
+ const title=document.createElement('h2');title.textContent='🎒 Checklist';panel.appendChild(title);
+ const hint=document.createElement('p');hint.textContent='Adicione um item por linha para '+t.text+'. Use a tecla Enter para passar à próxima linha.';panel.appendChild(hint);
+ const area=document.createElement('textarea');area.className='checklistEditorArea';area.rows=7;area.placeholder='Documento\nExames\nCarregador\nÓculos';area.value=checklistItems(t).map(x=>x.text).join('\n');area.setAttribute('aria-label','Itens do checklist, um por linha');panel.appendChild(area);
+ const footer=document.createElement('div');footer.className='checklistEditorFooter';
+ const close=()=>overlay.remove();
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.className='checklistEditorCancel';cancel.onclick=close;
+ const save=document.createElement('button');save.type='button';save.textContent='Salvar checklist';save.className='checklistEditorSave';save.onclick=()=>{const nomes=area.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).slice(0,40);const antigos=checklistItems(t);t.checklist=nomes.map((name,i)=>({id:i+1,text:name,done:!!antigos.find(x=>x.text===name&&x.done)}));saveTasks();close();toast('Checklist salvo: '+nomes.length+' itens.');};
+ footer.append(cancel,save);panel.appendChild(footer);overlay.appendChild(panel);overlay.onclick=e=>{if(e.target===overlay)close()};document.body.appendChild(overlay);
+}
+
 function markChecklist(id,index,checked){const t=tasks.find(x=>String(x.id)===String(id));if(!t||!checklistItems(t)[index])return;t.checklist[index].done=checked;saveTasks();}
 function checklistHTML(t){const itens=checklistItems(t);if(!itens.length)return'';const feitos=itens.filter(x=>x.done).length;return `<div class="checklistBlock"><div class="checklistLabel">🎒 Conferir antes de sair · ${feitos}/${itens.length}</div>${itens.map((x,i)=>`<label class="checklistRow"><input type="checkbox" ${x.done?'checked':''} onchange="markChecklist(${Number(t.id)},${i},this.checked)"><span>${esc(x.text)}</span></label>`).join('')}</div>`;}
 function renderChecklistSpotlight(){let host=document.getElementById('checklistSpotlight');if(!host)return;const now=Date.now();const candidatas=tasks.filter(t=>!t.done&&!t.paused&&checklistItems(t).length&&t.date&&t.time).map(t=>({t,ms:new Date(t.date+'T'+t.time+':00').getTime()})).filter(x=>Number.isFinite(x.ms)&&x.ms>now-3*3600000&&x.ms<now+36*3600000).sort((a,b)=>a.ms-b.ms);if(!candidatas.length){host.innerHTML='';return;}const t=candidatas[0].t;const dia=new Date(t.date+'T12:00').toLocaleDateString('pt-BR');host.innerHTML=`<section class="spotlightBox"><div class="spotlightTitle">🎒 Antes de sair · Confira sua lista</div><strong>${esc(t.text)}</strong><div class="spotlightWhen">${dia} às ${esc(t.time)}</div>${checklistHTML(t)}<button type="button" class="small" onclick="editChecklist(${Number(t.id)})">+ Editar itens</button></section>`;}
