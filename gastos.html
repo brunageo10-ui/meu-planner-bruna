@@ -118,6 +118,9 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <div class="title">Resumo do mês</div>
     <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
   </section>
+  <div class="listHead"><h2>Lançamentos do mês</h2><div><button class="small" id="csvBtn">CSV geral</button> <button class="small" id="backupBtn">Backup</button></div></div>
+  <div id="list"></div>
+
   <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
   <details class="card entryCard entryAccordion" open>
     <summary class="accordionHeading"><span>✍️ Lançamento rápido</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
@@ -146,8 +149,7 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <div class="actions" style="margin-top:10px"><button class="btn gold" id="fecharBtn">📌 Salvar fechamento</button><button class="btn" id="csvMesBtn">Exportar mês</button></div>
     <div class="hint" id="fechamentoStatus">Nenhum fechamento salvo para este mês.</div>
   </section>
-  <div class="listHead"><h2>Lançamentos do mês</h2><div><button class="small" id="csvBtn">CSV geral</button> <button class="small" id="backupBtn">Backup</button></div></div>
-  <div id="list"></div>
+
 </main>
 <div class="toast" id="toast"></div>
 <script>
