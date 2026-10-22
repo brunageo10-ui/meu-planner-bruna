@@ -139,6 +139,16 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .monthlyAccordion .expenseGroup{margin:9px 0}
 .monthlyAccordionHeading:focus-visible{outline:3px solid var(--w);outline-offset:-3px}
 
+
+/* Resumo financeiro retrátil, com valores preservados para os cálculos */
+.summaryAccordion{padding:0;overflow:hidden}
+.summaryAccordionHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;padding:16px 17px;min-height:63px;color:var(--w);font-size:clamp(19px,5.3vw,22px);font-weight:850}
+.summaryAccordionHeading::-webkit-details-marker{display:none}
+.summaryAccordion .summaryChevron{font-size:26px;color:var(--w);line-height:1;transition:transform .18s}
+.summaryAccordion[open] .summaryChevron{transform:rotate(180deg)}
+.summaryAccordionBody{padding:0 14px 15px}
+.summaryAccordionHeading:focus-visible{outline:3px solid var(--w);outline-offset:-3px}
+
 </style>
 </head>
 <body>
@@ -153,10 +163,12 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
     <div class="hint" id="monthLabel"></div>
   </section>
-  <section class="card summaryCard">
-    <div class="title">Resumo do mês</div>
-    <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
-  </section>
+  <details class="card summaryCard summaryAccordion">
+    <summary class="summaryAccordionHeading"><span>Resumo do mês</span><span class="summaryChevron" aria-hidden="true">⌄</span></summary>
+    <div class="summaryAccordionBody">
+      <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
+    </div>
+  </details>
   <details class="monthlyAccordion card">
     <summary class="monthlyAccordionHeading"><span>Lançamentos do mês</span><span class="monthlyChevron" aria-hidden="true">⌄</span></summary>
     <div class="monthlyAccordionBody">
