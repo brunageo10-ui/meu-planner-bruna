@@ -255,7 +255,7 @@ function adicionarEventoCalendario(t) {
   descricao.style.cssText = 'font-size:13px;line-height:1.5;color:#786b72;margin:0 0 16px;overflow-wrap:anywhere';
   painel.appendChild(descricao);
   const fechar = () => fundo.remove();
-  [['1','📱 Calendário do iPhone'],['2','📅 Google Agenda'],['3','🗓️ Adicionar aos dois']].forEach(([valor,rotulo]) => {
+  [['1','📱 iPhone — Calendário Apple'],['2','📱 Android — Google Agenda'],['3','🗓️ Usar os dois calendários']].forEach(([valor,rotulo]) => {
     const botao = document.createElement('button');
     botao.type = 'button';
     botao.textContent = rotulo;
