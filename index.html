@@ -462,9 +462,16 @@ try{
  backupBtn.onclick=async()=>{
  const user=auth.currentUser;
  if(!user){backupStatus.textContent='Entre com sua conta Google primeiro.';return}
- const keys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos'];
+ const keys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastos'];
  const data={};for(const key of keys){const value=localStorage.getItem(key);if(value!==null)data[key]=value}
  if(!Object.keys(data).length){backupStatus.textContent='Nenhum dado local encontrado neste navegador. Nada foi enviado.';return}
+ // Uma conta Google diferente nunca deve substituir a cópia de outra pessoa.
+ const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
+ if(owner&&owner!==user.uid){backupStatus.textContent='🛡️ Esta instalação já foi vinculada a outra conta Google. Nenhum backup foi enviado. Use um navegador/perfil separado para outra pessoa.';return}
+ if(!owner){
+  if(!confirm('Vincular os backups desta instalação à conta Google '+(user.email||'atual')+'? Isso não altera nem apaga seus dados. Outras contas não poderão enviar backups destes dados.'))return;
+  localStorage.setItem('brunaPlannerCloudOwnerUidV1',user.uid);
+ }
  const payload=JSON.stringify(data);
  if(new Blob([payload]).size>850000){backupStatus.textContent='Seus dados são grandes para um único backup. Nada foi alterado. Fale comigo para ajustarmos.';return}
  if(!confirm('Salvar uma cópia dos dados deste navegador na sua conta Google? Isso substituirá somente a cópia anterior na nuvem desta conta; seus dados no celular não serão apagados.'))return;
@@ -476,12 +483,13 @@ try{
 let inspectedBackup=null,inspectedUid=null;
 checkBtn.onclick=async()=>{
  const user=auth.currentUser;if(!user){backupStatus.textContent='Entre com Google antes de conferir.';return}
+ const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');if(owner&&owner!==user.uid){backupStatus.textContent='🛡️ Esta instalação pertence a outra conta. Não vamos misturar os dados. Use um perfil separado.';return}
  inspectedBackup=null;inspectedUid=null;downloadBtn.style.display='none';restoreBtn.style.display='none';checkBtn.disabled=true;backupStatus.textContent='Conferindo sua cópia na nuvem…';
  try{
   const snap=await getDoc(doc(db,'users',user.uid,'backups','manual'));
   if(!snap.exists()){backupStatus.textContent='Ainda não há backup na nuvem para esta conta.';return}
   const record=snap.data(),data=record.data;
-  const allowed=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos'];
+  const allowed=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastos'];
   if(!data||typeof data!=='object'||!Object.keys(data).length||Object.keys(data).some(k=>!allowed.includes(k)||typeof data[k]!=='string'))throw Error('Formato de backup não reconhecido');
   const stamp=record.updatedAt?.toDate?.();const when=stamp?stamp.toLocaleString('pt-BR'):'data não informada';
   const tasks=JSON.parse(data.brunaTasks||'[]'),shopping=JSON.parse(data.brunaShoppingV1||'[]');
@@ -498,6 +506,8 @@ downloadBtn.onclick=()=>{
 };
 restoreBtn.onclick=()=>{
  const user=auth.currentUser;
+ const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
+ if(owner&&user&&owner!==user.uid){backupStatus.textContent='🛡️ Conta diferente da vinculada a esta instalação. Recuperação bloqueada.';return}
  if(!user||!inspectedBackup||inspectedUid!==user.uid){backupStatus.textContent='Confira novamente o backup da conta correta.';return}
  const keys=Object.keys(inspectedBackup);
  const occupied=keys.filter(k=>localStorage.getItem(k)!==null);
