@@ -195,6 +195,7 @@ main{max-width:100%;overflow-x:clip!important}
 .homeQuickGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.homeQuickCard{display:flex;align-items:center;gap:11px;min-height:84px;padding:14px 12px;background:#fffdfa;border:1px solid #ecd8df;border-radius:19px;box-shadow:0 5px 16px rgba(82,44,37,.045);text-decoration:none;color:#461e2d;text-align:left;font-size:14px;font-weight:800;cursor:pointer}.homeQuickCard:active{transform:scale(.99);background:#fff5f8}.homeQuickCard .quickEmoji{display:grid;place-items:center;flex:none;width:37px;height:37px;border-radius:12px;background:#fbe7ee;color:#8a1238;font-size:19px}.homeQuickCard small{display:block;font-size:11px;color:#82737b;font-weight:500;margin-top:5px;line-height:1.25}
 .myDayPanel{margin-top:15px!important;border-color:#eac9d4!important;background:linear-gradient(145deg,#fffafc,#fff0f5)!important}.myDaySummary{font-size:20px}.myDaySummary small{font-size:12px}.hero{margin-top:14px}.hero .actions .primary{min-height:47px}#cloudLoginBox{background:#fffbfd!important}#cloudLoginBox button{min-height:39px}#cloudLoginBox #cloudBackupBtn{min-height:44px}
 @media(max-width:360px){.homeQuickCard{gap:8px;padding:11px 9px;font-size:12px}.homeQuickCard .quickEmoji{width:32px;height:32px}.homeQuickCard small{font-size:10px}}
+.myDayLate{margin:12px 0 5px;border:1px solid #efdae1;border-radius:15px;padding:10px 12px;background:#fffafc}.myDayLate summary{cursor:pointer;color:#8a1238;font-size:13px;font-weight:800;list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:30px}.myDayLate summary::-webkit-details-marker{display:none}.myDayLate summary span{background:#fce9ef;border-radius:100px;padding:4px 9px}.myDayLate p{font-size:12px;color:#786b72;margin:6px 0 10px}.myDayLate .myDayEntry{margin:7px 0}
 </style>
 </head>
 <body>
@@ -241,14 +242,18 @@ function reminderTag(t){if(!t.time||t.done)return'';let ev=dueAt(t);if(ev&&ev.ge
 function renderMyDay(){
  const host=document.getElementById('myDayContent');if(!host)return;
  const today=dk(),now=Date.now();
+ const eligible=tasks.filter(t=>!t.done&&!t.paused&&(!isRoutine(t)||routineToday(t)));
+ const late=eligible.filter(t=>!isRoutine(t)&&t.date&&t.date<today).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ const current=eligible.filter(t=>isRoutine(t)||!t.date||t.date>=today);
  const upcoming=tasks.filter(t=>!t.done&&!t.paused&&!isRoutine(t)&&t.date).map(t=>({t,when:dueAt(t)})).filter(x=>x.when&&x.when.getTime()>=now-3600000).sort((a,b)=>a.when-b.when);
  const next=upcoming[0];
- const eligible=tasks.filter(t=>!t.done&&!t.paused&&(!isRoutine(t)||routineToday(t)));
- const top=eligible.sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||(a.date===today?-1:0)-(b.date===today?-1:0)||String(a.date||'9999').localeCompare(String(b.date||'9999'))).slice(0,3);
+ const top=current.sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||(a.date===today?-1:0)-(b.date===today?-1:0)||String(a.date||'9999').localeCompare(String(b.date||'9999'))).slice(0,3);
  const check=upcoming.find(x=>checklistItems(x.t).length&&x.when.getTime()<now+36*3600000);
  const whenLabel=t=>{const d=dueAt(t);return d?d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+(t.time?' às '+t.time:''):''};
+ const taskRow=t=>'<label class="myDayEntry"><input type="checkbox" onchange="toggle('+Number(t.id)+')"><span class="myDayEntryText">'+esc(t.text)+(t.date?'<small>'+esc(whenLabel(t))+'</small>':'')+'</span></label>';
  host.innerHTML='<div class="myDayGroup"><div class="myDayGroupTitle">📅 Próximo compromisso</div>'+(next?'<div class="myDayEntry"><div class="myDayEntryText"><strong>'+esc(next.t.text)+'</strong><small>'+esc(whenLabel(next.t))+'</small></div></div>':'<div class="myDayEmpty">Nenhum compromisso futuro com data marcada.</div>')+'</div>'+
- '<div class="myDayGroup"><div class="myDayGroupTitle">⭐ Até 3 prioridades</div>'+(top.length?top.map(t=>'<label class="myDayEntry"><input type="checkbox" onchange="toggle('+Number(t.id)+')"><span class="myDayEntryText">'+esc(t.text)+(t.date?'<small>'+esc(whenLabel(t))+'</small>':'')+'</span></label>').join(''):'<div class="myDayEmpty">Tudo em dia por aqui! 🌿</div>')+'</div>'+
+ '<div class="myDayGroup"><div class="myDayGroupTitle">⭐ Até 3 prioridades</div>'+(top.length?top.map(taskRow).join(''):'<div class="myDayEmpty">Nenhuma prioridade atual. 🌿</div>')+'</div>'+
+ (late.length?'<details class="myDayLate"><summary>🕓 Pendências anteriores <span>'+late.length+'</span></summary><p>Atividades com datas passadas, sem apagar ou alterar nada.</p>'+late.map(taskRow).join('')+'</details>':'')+
  (check?'<div class="myDayGroup myDayChecklist"><div class="myDayGroupTitle">🎒 Antes de sair · '+esc(check.t.text)+'</div>'+checklistHTML(check.t)+'</div>':'');
 }
 function renderToday(){renderMyDay();renderChecklistSpotlight();E.todayLabel.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});let today=dk(),items=[];tasks.filter(isActive).forEach(t=>{if(isRoutine(t)){if(routineToday(t))items.push({id:t.id,text:t.text,time:t.time||'08:00',cat:t.cat,routine:true,stamp:todayAt(t.time||'08:00').getTime()});return}let ev=dueAt(t);if(t.date===today||(ev&&dk(ev)===today))items.push({id:t.id,text:t.text,time:t.time||'Hoje',cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()})});items=items.sort((a,b)=>a.stamp-b.stamp);E.todayList.innerHTML=items.length?items.map(x=>`<div class="mini"><span class="timeMini">${esc(x.time)}</span><div class="miniMain"><div class="miniText">${esc(x.text)}</div><div class="miniCat">${x.routine?'Rotina • ':''}${esc(label(x.cat))}</div></div></div>`).join(''):'<div class="mini"><div class="miniText">Nada marcado para hoje. Ótimo respiro 🌿</div></div>'}
