@@ -149,6 +149,15 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .summaryAccordionBody{padding:0 14px 15px}
 .summaryAccordionHeading:focus-visible{outline:3px solid var(--w);outline-offset:-3px}
 
+
+/* Painel financeiro compacto — valores calculados dos registros, sem alterar armazenamento */
+.financePulse{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:13px 0 15px}
+.financePulse>div{border:1px solid #efd9e0;border-radius:17px;padding:12px 8px;background:#fff;min-width:0;box-shadow:0 5px 16px rgba(113,30,56,.035)}
+.financePulse small{display:block;color:#81727a;font-size:11px;margin-bottom:7px}
+.financePulse strong{display:block;overflow-wrap:anywhere;font-size:clamp(12px,3.6vw,19px);line-height:1.25;color:#481c2d;font-variant-numeric:tabular-nums}
+.financePulse>div:nth-child(1) strong{color:#167a4a}.financePulse>div:nth-child(2) strong{color:#a51635}
+.closingAccordion{padding:0;overflow:hidden}.closingHeading{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;color:#42101f;font-size:19px;font-weight:850;padding:17px;min-height:63px}.closingHeading::-webkit-details-marker{display:none}.closingHeading span{font-size:25px;color:#8a1238;transition:transform .18s}.closingAccordion[open] .closingHeading span{transform:rotate(180deg)}.closingInner{padding:0 15px 15px}
+@media(max-width:390px){.financePulse{gap:6px}.financePulse>div{padding:11px 7px}.financePulse small{font-size:10px}.financePulse strong{font-size:12px}}
 </style>
 </head>
 <body>
@@ -163,6 +172,7 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
     <div class="hint" id="monthLabel"></div>
   </section>
+  <section class="financePulse" aria-label="Resumo financeiro de rápida consulta"><div><small>Entradas</small><strong id="pulseIn">R$ 0,00</strong></div><div><small>Gastos</small><strong id="pulseOut">R$ 0,00</strong></div><div><small>Saldo do mês</small><strong id="pulseBalance">R$ 0,00</strong></div></section>
   <details class="card summaryCard summaryAccordion">
     <summary class="summaryAccordionHeading"><span>Resumo do mês</span><span class="summaryChevron" aria-hidden="true">⌄</span></summary>
     <div class="summaryAccordionBody">
@@ -178,7 +188,7 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
   </details>
 
     <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
-  <details class="card entryCard entryAccordion" open>
+  <details class="card entryCard entryAccordion">
     <summary class="accordionHeading"><span><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4"/><path d="M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20z"/></svg> Lançamento rápido</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
     <div class="accordionBody">
     
@@ -198,13 +208,15 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
     </div>
   </details>
-  <section class="card closingCard">
-    <div class="title">Fechamento do mês</div>
+  <details class="card closingCard closingAccordion">
+    <summary class="closingHeading">Fechamento do mês <span aria-hidden="true">⌄</span></summary>
+    <div class="closingInner">
     <div class="closeBox" id="fechamentoBox"></div>
     <div class="catGrid" id="catResumo"></div>
     <div class="actions" style="margin-top:10px"><button class="btn gold" id="fecharBtn"><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 3 6 6-2 2 4 4-2 2-4-4-2 2-6-6z"/><path d="m9 15-5 6"/></svg> Salvar fechamento</button><button class="btn" id="csvMesBtn">Exportar mês</button></div>
     <div class="hint" id="fechamentoStatus">Nenhum fechamento salvo para este mês.</div>
-  </section>
+    </div>
+  </details>
 
 </main>
 <div class="toast" id="toast"></div>
@@ -243,7 +255,7 @@ function monthItems(){const ym=$('mes').value||monthNow();return items.filter(i=
 function calcMonth(){const arr=monthItems();let entradas=0,saidas=0;const cats={};arr.forEach(i=>{const val=Number(i.valor)||0;if(i.tipo==='entrada'){entradas+=val}else{saidas+=val;cats[i.cat||'Outros']=(cats[i.cat||'Outros']||0)+val}});return {arr,entradas,saidas,saldo:entradas-saidas,cats}}
 const groupIncomeIcon="<svg class=\"financeIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v18M5 12h14\"/><circle cx=\"12\" cy=\"12\" r=\"9\"/></svg>";
 const groupExpenseIcon="<svg class=\"financeIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h16v13H4zM4 10h16M16 15h2\"/></svg>";
-function render(){const ym=$('mes').value||monthNow();$('monthLabel').textContent='Visualizando: '+monthName(ym);const r=calcMonth();$('totalIn').textContent=money(r.entradas);$('totalOut').textContent=money(r.saidas);$('saldo').textContent=money(r.saldo);$('saldo').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('fechamentoBox').innerHTML=`<div class="closeLine"><span>Mês</span><b>${monthName(ym)}</b></div><div class="closeLine"><span>Entradas</span><b style="color:var(--green)">${money(r.entradas)}</b></div><div class="closeLine"><span>Gastos</span><b style="color:var(--red)">${money(r.saidas)}</b></div><div class="closeLine"><span>Saldo final</span><b style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${money(r.saldo)}</b></div><div class="closeLine"><span>Lançamentos</span><b>${r.arr.length}</b></div>`;const catEntries=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]);$('catResumo').innerHTML=catEntries.length?catEntries.map(([c,v])=>`<div class="catRow"><span>${escapeHtml(c)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty">Sem gastos por categoria neste mês.</div>';const saved=fechamentos[ym];$('fechamentoStatus').textContent=saved?'Fechamento salvo em '+new Date(saved.savedAt).toLocaleString('pt-BR')+'.':'Nenhum fechamento salvo para este mês.';const list=$('list');if(!r.arr.length){list.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return}const groups=new Map();r.arr.forEach(i=>{const name=String(i.desc||'Lançamento').trim().replace(/\\s+/g,' ');const key=(i.tipo||'saida')+'|'+name.toLocaleLowerCase('pt-BR');if(!groups.has(key))groups.set(key,{name,tipo:i.tipo,rows:[],total:0});const g=groups.get(key);g.rows.push(i);g.total+=Number(i.valor)||0});list.innerHTML=Array.from(groups.values()).map(g=>`<details class="expenseGroup"><summary><span class="groupName"><span class="groupTitle"><span class="groupIcon ${g.tipo==='entrada'?'groupIncome':'groupExpense'}">${g.tipo==='entrada'?groupIncomeIcon:groupExpenseIcon}</span><span class="groupTitleText">${escapeHtml(g.name)}</span></span><small>${g.rows.length} ${g.rows.length===1?'lançamento':'lançamentos'} • toque para ver</small></span><span class="groupRight"><b class="money ${g.tipo==='entrada'?'in':'out'}">${g.tipo==='entrada'?'+':'-'} ${money(g.total)}</b><span class="groupChevron" aria-hidden="true">⌄</span></span></summary><div class="groupEntries">${g.rows.map(i=>`<div class="groupEntry"><div><div class="meta">${escapeHtml(i.data||'')} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div></div><button class="del" aria-label="Excluir lançamento" onclick="delItem(${i.id})">×</button></div>`).join('')}</div></details>`).join('')}
+function render(){const ym=$('mes').value||monthNow();$('monthLabel').textContent='Visualizando: '+monthName(ym);const r=calcMonth();$('totalIn').textContent=money(r.entradas);$('totalOut').textContent=money(r.saidas);$('saldo').textContent=money(r.saldo);$('saldo').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('pulseIn').textContent=money(r.entradas);$('pulseOut').textContent=money(r.saidas);$('pulseBalance').textContent=money(r.saldo);$('pulseBalance').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('fechamentoBox').innerHTML=`<div class="closeLine"><span>Mês</span><b>${monthName(ym)}</b></div><div class="closeLine"><span>Entradas</span><b style="color:var(--green)">${money(r.entradas)}</b></div><div class="closeLine"><span>Gastos</span><b style="color:var(--red)">${money(r.saidas)}</b></div><div class="closeLine"><span>Saldo final</span><b style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${money(r.saldo)}</b></div><div class="closeLine"><span>Lançamentos</span><b>${r.arr.length}</b></div>`;const catEntries=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]);$('catResumo').innerHTML=catEntries.length?catEntries.map(([c,v])=>`<div class="catRow"><span>${escapeHtml(c)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty">Sem gastos por categoria neste mês.</div>';const saved=fechamentos[ym];$('fechamentoStatus').textContent=saved?'Fechamento salvo em '+new Date(saved.savedAt).toLocaleString('pt-BR')+'.':'Nenhum fechamento salvo para este mês.';const list=$('list');if(!r.arr.length){list.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return}const groups=new Map();r.arr.forEach(i=>{const name=String(i.desc||'Lançamento').trim().replace(/\\s+/g,' ');const key=(i.tipo||'saida')+'|'+name.toLocaleLowerCase('pt-BR');if(!groups.has(key))groups.set(key,{name,tipo:i.tipo,rows:[],total:0});const g=groups.get(key);g.rows.push(i);g.total+=Number(i.valor)||0});list.innerHTML=Array.from(groups.values()).map(g=>`<details class="expenseGroup"><summary><span class="groupName"><span class="groupTitle"><span class="groupIcon ${g.tipo==='entrada'?'groupIncome':'groupExpense'}">${g.tipo==='entrada'?groupIncomeIcon:groupExpenseIcon}</span><span class="groupTitleText">${escapeHtml(g.name)}</span></span><small>${g.rows.length} ${g.rows.length===1?'lançamento':'lançamentos'} • toque para ver</small></span><span class="groupRight"><b class="money ${g.tipo==='entrada'?'in':'out'}">${g.tipo==='entrada'?'+':'-'} ${money(g.total)}</b><span class="groupChevron" aria-hidden="true">⌄</span></span></summary><div class="groupEntries">${g.rows.map(i=>`<div class="groupEntry"><div><div class="meta">${escapeHtml(i.data||'')} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div></div><button class="del" aria-label="Excluir lançamento" onclick="delItem(${i.id})">×</button></div>`).join('')}</div></details>`).join('')}
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 window.delItem=id=>{items=items.filter(i=>i.id!==id);save();render();toast('Lançamento apagado.')}
 function salvarFechamento(){const ym=$('mes').value||monthNow();const r=calcMonth();fechamentos[ym]={mes:ym,entradas:r.entradas,saidas:r.saidas,saldo:r.saldo,lancamentos:r.arr.length,categorias:r.cats,savedAt:new Date().toISOString()};saveClosings();render();toast('Fechamento salvo 📌')}
