@@ -158,6 +158,11 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .financePulse>div:nth-child(1) strong{color:#167a4a}.financePulse>div:nth-child(2) strong{color:#a51635}
 .closingAccordion{padding:0;overflow:hidden}.closingHeading{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;color:#42101f;font-size:19px;font-weight:850;padding:17px;min-height:63px}.closingHeading::-webkit-details-marker{display:none}.closingHeading span{font-size:25px;color:#8a1238;transition:transform .18s}.closingAccordion[open] .closingHeading span{transform:rotate(180deg)}.closingInner{padding:0 15px 15px}
 @media(max-width:390px){.financePulse{gap:6px}.financePulse>div{padding:11px 7px}.financePulse small{font-size:10px}.financePulse strong{font-size:12px}}
+
+/* Prioridade: registrar movimento primeiro; mês de análise após o histórico */
+.entryIntro{margin-top:16px}
+.financePulse{margin-top:22px}
+.monthCard{margin-top:18px}
 </style>
 </head>
 <body>
@@ -167,28 +172,8 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <button class="round" onclick="location.href='index.html'"><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></svg></button>
   </div>
 
-  <section class="card monthCard">
-    <div class="title">Mês de análise</div>
-    <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
-    <div class="hint" id="monthLabel"></div>
-  </section>
-  <section class="financePulse" aria-label="Resumo financeiro de rápida consulta"><div><small>Entradas</small><strong id="pulseIn">R$ 0,00</strong></div><div><small>Gastos</small><strong id="pulseOut">R$ 0,00</strong></div><div><small>Saldo do mês</small><strong id="pulseBalance">R$ 0,00</strong></div></section>
-  <details class="card summaryCard summaryAccordion">
-    <summary class="summaryAccordionHeading"><span>Resumo do mês</span><span class="summaryChevron" aria-hidden="true">⌄</span></summary>
-    <div class="summaryAccordionBody">
-      <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
-    </div>
-  </details>
-  <details class="monthlyAccordion card">
-    <summary class="monthlyAccordionHeading"><span>Lançamentos do mês</span><span class="monthlyChevron" aria-hidden="true">⌄</span></summary>
-    <div class="monthlyAccordionBody">
-      <div class="monthlyToolbar"><details class="financeTools"><summary aria-label="Ferramentas financeiras" title="Exportar ou salvar cópia"><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.1 2.1-.06-.06A1.7 1.7 0 0 0 15.76 19a1.7 1.7 0 0 0-1.06 1.56V21h-3v-.44A1.7 1.7 0 0 0 10.64 19a1.7 1.7 0 0 0-1.88.34l-.06.06-2.1-2.1.06-.06A1.7 1.7 0 0 0 7 15.36 1.7 1.7 0 0 0 5.44 14.3H5v-3h.44A1.7 1.7 0 0 0 7 10.24a1.7 1.7 0 0 0-.34-1.88L6.6 8.3l2.1-2.1.06.06A1.7 1.7 0 0 0 10.64 6a1.7 1.7 0 0 0 1.06-1.56V4h3v.44A1.7 1.7 0 0 0 15.76 6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.1 2.1-.06.06A1.7 1.7 0 0 0 19.4 9.64a1.7 1.7 0 0 0 1.56 1.06H21v3h-.44A1.7 1.7 0 0 0 19.4 15z" transform="translate(-.5 -.5) scale(1.04)"/></svg><span>Ferramentas</span></summary><div class="financeToolsMenu"><button class="small" id="csvBtn">Exportar CSV geral</button><button class="small" id="backupBtn">Salvar backup</button></div></details></div>
-      <div id="list"></div>
-    </div>
-  </details>
-
     <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
-  <details class="card entryCard entryAccordion">
+  <details class="card entryCard entryAccordion" open>
     <summary class="accordionHeading"><span><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4"/><path d="M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20z"/></svg> Lançamento rápido</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
     <div class="accordionBody">
     
@@ -208,6 +193,26 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
     </div>
   </details>
+  <section class="financePulse" aria-label="Resumo financeiro de rápida consulta"><div><small>Entradas</small><strong id="pulseIn">R$ 0,00</strong></div><div><small>Gastos</small><strong id="pulseOut">R$ 0,00</strong></div><div><small>Saldo do mês</small><strong id="pulseBalance">R$ 0,00</strong></div></section>
+  <details class="card summaryCard summaryAccordion">
+    <summary class="summaryAccordionHeading"><span>Resumo do mês</span><span class="summaryChevron" aria-hidden="true">⌄</span></summary>
+    <div class="summaryAccordionBody">
+      <div class="stats"><div class="stat">Entradas<b class="in" id="totalIn">R$ 0,00</b></div><div class="stat">Gastos<b class="out" id="totalOut">R$ 0,00</b></div><div class="stat">Saldo<b id="saldo">R$ 0,00</b></div></div>
+    </div>
+  </details>
+  <details class="monthlyAccordion card">
+    <summary class="monthlyAccordionHeading"><span>Lançamentos do mês</span><span class="monthlyChevron" aria-hidden="true">⌄</span></summary>
+    <div class="monthlyAccordionBody">
+      <div class="monthlyToolbar"><details class="financeTools"><summary aria-label="Ferramentas financeiras" title="Exportar ou salvar cópia"><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.1 2.1-.06-.06A1.7 1.7 0 0 0 15.76 19a1.7 1.7 0 0 0-1.06 1.56V21h-3v-.44A1.7 1.7 0 0 0 10.64 19a1.7 1.7 0 0 0-1.88.34l-.06.06-2.1-2.1.06-.06A1.7 1.7 0 0 0 7 15.36 1.7 1.7 0 0 0 5.44 14.3H5v-3h.44A1.7 1.7 0 0 0 7 10.24a1.7 1.7 0 0 0-.34-1.88L6.6 8.3l2.1-2.1.06.06A1.7 1.7 0 0 0 10.64 6a1.7 1.7 0 0 0 1.06-1.56V4h3v.44A1.7 1.7 0 0 0 15.76 6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.1 2.1-.06.06A1.7 1.7 0 0 0 19.4 9.64a1.7 1.7 0 0 0 1.56 1.06H21v3h-.44A1.7 1.7 0 0 0 19.4 15z" transform="translate(-.5 -.5) scale(1.04)"/></svg><span>Ferramentas</span></summary><div class="financeToolsMenu"><button class="small" id="csvBtn">Exportar CSV geral</button><button class="small" id="backupBtn">Salvar backup</button></div></details></div>
+      <div id="list"></div>
+    </div>
+  </details>
+
+  <section class="card monthCard">
+    <div class="title">Mês de análise</div>
+    <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
+    <div class="hint" id="monthLabel"></div>
+  </section>
   <details class="card closingCard closingAccordion">
     <summary class="closingHeading">Fechamento do mês <span aria-hidden="true">⌄</span></summary>
     <div class="closingInner">
