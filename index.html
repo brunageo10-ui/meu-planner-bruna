@@ -590,14 +590,26 @@ try{
   finally{autoRunning=false}
  }
  autoBtn.onclick=async()=>{
-  const user=auth.currentUser;if(!user)return;
-  if(autoEnabled()){
-   localStorage.removeItem(autoEnabledKey);renderAuto();return;
-  }
-  const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
-  if(!owner||owner!==user.uid){autoStatus.textContent='Antes de ativar, salve uma cópia manual e vincule esta instalação à sua conta Google.';return}
-  if(!confirm('Ativar backup automático nesta instalação? Enquanto o Planner estiver aberto, ele verificará mudanças periodicamente e guardará uma cópia separada na sua conta Google. Nada será restaurado automaticamente e a cópia manual não será substituída.'))return;
-  localStorage.setItem(autoEnabledKey,'yes');renderAuto();await runAutoBackup(true);
+  autoStatus.textContent='🔎 Verificando sua conta e preparando a ativação…';
+  try{
+   const user=auth.currentUser;
+   if(!user){autoStatus.textContent='Entre com sua conta Google para ativar.';return}
+   if(autoEnabled()){
+    localStorage.removeItem(autoEnabledKey);renderAuto();return;
+   }
+   const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
+   if(owner&&owner!==user.uid){autoStatus.textContent='🛡️ Outra conta Google está vinculada a este aparelho. Nada foi enviado.';return}
+   const data=localSnapshot();
+   if(!Object.keys(data).length){autoStatus.textContent='Nenhum dado local encontrado. Backup não ativado.';return}
+   if(!owner){
+    if(!confirm('Vincular o backup automático deste aparelho à conta '+(user.email||'Google atual')+'? Não apaga os dados, não restaura nada e não modifica a cópia manual.')){autoStatus.textContent='Ativação cancelada; seus dados continuam intactos.';return}
+    localStorage.setItem('brunaPlannerCloudOwnerUidV1',user.uid);
+   }else if(!confirm('Ativar o backup automático nesta instalação? As cópias automáticas ficam separadas do backup manual e são feitas enquanto o Planner está aberto.')){autoStatus.textContent='Ativação cancelada; o backup manual continua disponível.';return}
+   localStorage.setItem(autoEnabledKey,'yes');
+   autoBtn.textContent='⏸️ Desativar backup automático';
+   autoStatus.textContent='⏳ Backup automático ativado. Salvando primeira cópia na nuvem…';
+   await runAutoBackup(true);
+  }catch(e){autoStatus.textContent='⚠️ Não foi possível ativar: '+(e.code||e.message)+'. Os dados locais continuam intactos.'}
  };
  setInterval(()=>{if(autoEnabled())runAutoBackup()},5*60*1000);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&autoEnabled())runAutoBackup()});
