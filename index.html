@@ -245,9 +245,10 @@ function renderMyDay(){
  const host=document.getElementById('myDayContent');if(!host)return;
  const today=dk(),now=Date.now();
  const eligible=tasks.filter(t=>!t.done&&!t.paused&&(!isRoutine(t)||routineToday(t)));
- const late=eligible.filter(t=>!isRoutine(t)&&t.date&&t.date<today).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
- const current=eligible.filter(t=>isRoutine(t)||!t.date||t.date>=today);
- const upcoming=tasks.filter(t=>!t.done&&!t.paused&&!isRoutine(t)&&t.date).map(t=>({t,when:dueAt(t)})).filter(x=>x.when&&x.when.getTime()>=now-3600000).sort((a,b)=>a.when-b.when);
+ const isPast=t=>!isRoutine(t)&&!!t.date&&(t.date<today||(t.date===today&&!!t.time&&dueAt(t)?.getTime()<now));
+ const late=eligible.filter(isPast).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+ const current=eligible.filter(t=>!isPast(t));
+ const upcoming=tasks.filter(t=>!t.done&&!t.paused&&!isRoutine(t)&&t.date&&t.time).map(t=>({t,when:dueAt(t)})).filter(x=>x.when&&x.when.getTime()>=now).sort((a,b)=>a.when-b.when);
  const next=upcoming[0];
  const top=current.sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||(a.date===today?-1:0)-(b.date===today?-1:0)||String(a.date||'9999').localeCompare(String(b.date||'9999'))).slice(0,3);
  const check=upcoming.find(x=>checklistItems(x.t).length&&x.when.getTime()<now+36*3600000);
@@ -255,7 +256,7 @@ function renderMyDay(){
  const taskRow=t=>'<label class="myDayEntry"><input type="checkbox" onchange="toggle('+Number(t.id)+')"><span class="myDayEntryText">'+esc(t.text)+(t.date?'<small>'+esc(whenLabel(t))+'</small>':'')+'</span></label>';
  host.innerHTML='<div class="myDayGroup"><div class="myDayGroupTitle">📅 Próximo compromisso</div>'+(next?'<div class="myDayEntry"><div class="myDayEntryText"><strong>'+esc(next.t.text)+'</strong><small>'+esc(whenLabel(next.t))+'</small></div></div>':'<div class="myDayEmpty">Nenhum compromisso futuro com data marcada.</div>')+'</div>'+
  '<div class="myDayGroup"><div class="myDayGroupTitle">⭐ Até 3 prioridades</div>'+(top.length?top.map(taskRow).join(''):'<div class="myDayEmpty">Nenhuma prioridade atual. 🌿</div>')+'</div>'+
- (late.length?'<details class="myDayLate"><summary>🕓 Pendências anteriores <span>'+late.length+'</span></summary><p>Atividades com datas passadas, sem apagar ou alterar nada.</p>'+late.map(taskRow).join('')+'</details>':'')+
+ (late.length?'<details class="myDayLate"><summary>🕓 Pendências anteriores <span>'+late.length+'</span></summary><p>Atividades com data ou horário já passados, sem apagar ou alterar nada.</p>'+late.map(taskRow).join('')+'</details>':'')+
  (check?'<div class="myDayGroup myDayChecklist"><div class="myDayGroupTitle">🎒 Antes de sair · '+esc(check.t.text)+'</div>'+checklistHTML(check.t)+'</div>':'');
 }
 function renderToday(){renderMyDay();renderChecklistSpotlight();E.todayLabel.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});let today=dk(),items=[];tasks.filter(isActive).forEach(t=>{if(isRoutine(t)){if(routineToday(t))items.push({id:t.id,text:t.text,time:t.time||'08:00',cat:t.cat,routine:true,stamp:todayAt(t.time||'08:00').getTime()});return}let ev=dueAt(t);if(t.date===today||(ev&&dk(ev)===today))items.push({id:t.id,text:t.text,time:t.time||'Hoje',cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()})});items=items.sort((a,b)=>a.stamp-b.stamp);E.todayList.innerHTML=items.length?items.map(x=>`<div class="mini"><span class="timeMini">${esc(x.time)}</span><div class="miniMain"><div class="miniText">${esc(x.text)}</div><div class="miniCat">${x.routine?'Rotina • ':''}${esc(label(x.cat))}</div></div></div>`).join(''):'<div class="mini"><div class="miniText">Nada marcado para hoje. Ótimo respiro 🌿</div></div>'}
