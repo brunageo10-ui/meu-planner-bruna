@@ -255,7 +255,7 @@ main{max-width:100%;overflow-x:clip!important}
 </main>
 <section id="shopView" aria-label="Lista de supermercado" aria-hidden="true">
  <div class="shopHead"><button type="button" class="shopBack" id="shopBack">← Voltar</button><h2>🛒 Supermercado</h2></div>
- <div class="shopPanel"><label for="shopInput"><strong>O que precisamos comprar?</strong></label><p class="shopMuted">Digite vários produtos separados por vírgula ou por linha. Ex.: banana 1 kg, arroz 2 pacotes, detergente 3 unidades.</p><textarea id="shopInput" placeholder="Ex.: banana, café, leite, sabão em pó..."></textarea><div class="shopActions"><button type="button" class="shopBtn" id="shopAdd">＋ Adicionar à lista</button><button type="button" class="shopBtn shopSecondary" id="shopClearChecks">Desmarcar comprados</button></div></div>
+ <div class="shopPanel"><label for="shopInput"><strong>O que precisamos comprar?</strong></label><p class="shopMuted">Digite vários produtos separados por vírgula ou por linha. Ex.: banana 1 kg, arroz 2 pacotes, detergente 3 unidades.</p><textarea id="shopInput" placeholder="Ex.: banana, café, leite, sabão em pó..."></textarea><div class="shopActions"><button type="button" class="shopBtn shopSecondary" id="shopVoice" aria-label="Ditar produtos" aria-pressed="false">🎙️ Falar produtos</button><button type="button" class="shopBtn" id="shopAdd">＋ Adicionar à lista</button><button type="button" class="shopBtn shopSecondary" id="shopClearChecks">Desmarcar comprados</button></div><p class="shopMuted" id="shopVoiceStatus" role="status" aria-live="polite">Dica: fale "banana, leite, arroz" e confira antes de adicionar.</p></div>
  <div class="shopPanel"><div class="shopProgress" id="shopProgress">0 de 0 comprados</div><p class="shopMuted">Toque no quadradinho ao colocar um produto no carrinho. Os produtos ficam salvos neste dispositivo.</p></div>
  <div id="shopGroups"></div>
 </section>
@@ -550,7 +550,7 @@ E.calendarBtn.onclick=agendarCalendario;E.settingsBtn.onclick=()=>toast('⚙️ 
     row.append(cb,label,remove);box.appendChild(row)}wrap.appendChild(box)}
  }
  function openShop(){const v=$s('shopView');v.classList.add('open');v.setAttribute('aria-hidden','false');v.scrollTop=0;renderShop()}
- function closeShop(){const v=$s('shopView');v.classList.remove('open');v.setAttribute('aria-hidden','true')}
+ function closeShop(){stopShopVoice(true);const v=$s('shopView');v.classList.remove('open');v.setAttribute('aria-hidden','true')}
  $s('shopLaunch').addEventListener('click',openShop);$s('shopBack').addEventListener('click',closeShop);
  $s('shopAdd').addEventListener('click',()=>{const input=$s('shopInput');const names=input.value.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);if(!names.length){input.focus();return}for(const name of names)products.push({name,done:false});input.value='';save()});
  $s('shopClearChecks').addEventListener('click',()=>{products.forEach(p=>p.done=false);save()});
