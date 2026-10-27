@@ -299,9 +299,9 @@ function parseDate(text){let s=norm(text),d=new Date(),m=s.match(/\b(\d{1,2})[\/
 function parseTime(text){let s=norm(text),m=s.match(/\b(?:as?\s*)?([01]?\d|2[0-3])\s*(?:h|:)\s*([0-5]\d)\b/);if(!m)m=s.match(/\b(?:as?\s*)?([01]?\d|2[0-3])\s*h\b/);if(m)return pad(Number(m[1]))+':'+pad(m[2]||'00');if(/meio\s*dia/.test(s))return'12:00';if(/cedo|manha/.test(s))return'08:00';if(/tarde/.test(s))return'15:00';if(/noite/.test(s))return'19:00';return''}
 function parseRecurrence(text){let s=norm(text),m=s.match(/\b(?:todo\s+dia|todos\s+os\s+dias|diariamente)\b/);if(m&&!/todo\s+dia\s+\d/.test(s))return{type:'daily',label:'todos os dias'};m=s.match(/\b(?:todo\s+dia|dia)\s+(\d{1,2})\s+(?:de\s+)?(?:todo\s+mes|todos\s+os\s+meses|mensal)\b/);if(m)return{type:'monthly',day:Number(m[1]),label:'todo dia '+Number(m[1])+' do mês'};m=s.match(/\b(?:todo|toda|todos\s+os|todas\s+as)\s+(domingo|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado)s?\b/);if(m)return{type:'weekly',day:DAYS[m[1]],label:'toda semana'};return null}
 function dateForTime(time){let d=new Date(),p=time.split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+60000)d.setDate(d.getDate()+1);return dk(d)}
-function makeItem(text,old={}){let c=classify(text),time=parseTime(text),rec=parseRecurrence(text);if(rec&&!time)time='08:00';let date=rec?'':(parseDate(text)||(time?dateForTime(time):''));return{id:old.id||Date.now(),text,cat:c.cat,sub:c.sub,date,time,recurrence:rec,paused:!!old.paused,done:!!old.done,priority:!!old.priority,checklist:Array.isArray(old.checklist)?old.checklist:[],reminderMinutes:old.reminderMinutes===undefined?60:old.reminderMinutes,created:old.created||new Date().toISOString()}}
+function makeItem(text,old={}){let c=classify(text),time=parseTime(text),rec=parseRecurrence(text);if(rec&&!time)time='08:00';let date=rec?'':(parseDate(text)||(time?dateForTime(time):''));return{id:old.id||Date.now(),text,cat:c.cat,sub:c.sub,date,time,recurrence:rec,paused:!!old.paused,done:!!old.done,priority:!!old.priority,checklist:Array.isArray(old.checklist)?old.checklist:[],reminderMinutes:old.reminderMinutes===undefined?60:old.reminderMinutes,reminderAtEvent:!!old.reminderAtEvent,created:old.created||new Date().toISOString()}}
 function isRoutine(t){return !!t.recurrence}function isActive(t){return !t.done&&!t.paused}function dueAt(t){if(t.date||t.time){let d=t.date?new Date(t.date+'T'+(t.time||'08:00')):new Date();if(!t.date){let p=(t.time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d<Date.now())d.setDate(d.getDate()+1)}return d}return null}function todayAt(time){let d=new Date(),p=(time||'23:59').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);return d}function routineToday(t){let r=t.recurrence,d=new Date();if(!r)return false;if(r.type==='daily')return true;if(r.type==='weekly')return d.getDay()===r.day;if(r.type==='monthly')return d.getDate()===r.day;return false}
-function reminderTag(t){if(!t.time||t.done)return'';let ev=dueAt(t);if(ev&&ev.getTime()<Date.now())return'<span class="warnTag">⏰ horário passou</span>';let s=scheduled();if(s[t.id]&&s[t.id].sendAt===new Date(ev.getTime()-reminderMinutes(t)*60000).toISOString())return'<span class="rem">🔔 '+reminderLabel(t)+'</span>';if(!('Notification' in window))return'<span class="warnTag">🔕 sem notificação</span>';if(Notification.permission==='granted')return`<button class="warnTag" onclick="reschedule(${t.id})">⚠️ agendar aviso</button>`;return'<button class="warnTag" onclick="enableNotify()">🔔 ativar notificações</button>'}
+function reminderTag(t){if(!t.time||t.done)return'';let ev=dueAt(t);if(ev&&ev.getTime()<Date.now())return'<span class="warnTag">⏰ horário passou</span>';let s=scheduled();const ok=reminderOffsets(t).every(n=>{const key=n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id);const sendAt=new Date(ev.getTime()-n*60000).toISOString();return s[key]&&s[key].sendAt===sendAt});if(ok)return'<span class="rem">🔔 '+reminderLabel(t)+'</span>';if(!('Notification' in window))return'<span class="warnTag">🔕 sem notificação</span>';if(Notification.permission==='granted')return`<button class="warnTag" onclick="reschedule(${t.id})">⚠️ agendar aviso</button>`;return'<button class="warnTag" onclick="enableNotify()">🔔 ativar notificações</button>'}
 function renderMyDay(){
  const host=document.getElementById('myDayContent');if(!host)return;
  const today=dk(),now=Date.now();
@@ -321,8 +321,10 @@ function renderMyDay(){
  (check?'<div class="myDayGroup myDayChecklist"><div class="myDayGroupTitle">🎒 Antes de sair · '+esc(check.t.text)+'</div>'+checklistHTML(check.t)+'</div>':'');
 }
 function renderToday(){renderMyDay();renderChecklistSpotlight();E.todayLabel.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});let today=dk(),items=[];tasks.filter(isActive).forEach(t=>{if(isRoutine(t)){if(routineToday(t))items.push({id:t.id,text:t.text,time:t.time||'08:00',cat:t.cat,routine:true,stamp:todayAt(t.time||'08:00').getTime()});return}let ev=dueAt(t);if(t.date===today||(ev&&dk(ev)===today))items.push({id:t.id,text:t.text,time:t.time||'Hoje',cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()})});items=items.sort((a,b)=>a.stamp-b.stamp);E.todayList.innerHTML=items.length?items.map(x=>`<div class="mini"><span class="timeMini">${esc(x.time)}</span><div class="miniMain"><div class="miniText">${esc(x.text)}</div><div class="miniCat">${x.routine?'Rotina • ':''}${esc(label(x.cat))}</div></div></div>`).join(''):'<div class="mini"><div class="miniText">Nada marcado para hoje. Ótimo respiro 🌿</div></div>'}
-function reminderMinutes(t){return [0,10,30,60,120,1440].includes(Number(t.reminderMinutes))?Number(t.reminderMinutes):60}
-function reminderLabel(t){const n=reminderMinutes(t);return n===0?'No horário':n===1440?'1 dia antes':n===60?'1 hora antes':n===120?'2 horas antes':n+' minutos antes'}
+function reminderMinutes(t){return [0,5,10,15,30,60,120,1440].includes(Number(t.reminderMinutes))?Number(t.reminderMinutes):60}
+function reminderOffsets(t){const n=reminderMinutes(t);return t.reminderAtEvent&&n!==0?[n,0]:[n]}
+function reminderKeys(t){return reminderOffsets(t).map(n=>n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id))}
+function reminderLabel(t){const n=reminderMinutes(t);const s=n===0?'No horário':n===1440?'1 dia antes':n===60?'1 hora antes':n===120?'2 horas antes':n+' minutos antes';return s+(t.reminderAtEvent&&n!==0?' + no horário':'')}
 function editReminder(id){
  const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;
  document.getElementById('reminderChoiceModal')?.remove();
@@ -330,9 +332,10 @@ function editReminder(id){
  const panel=document.createElement('div');panel.className='reminderPanel';panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Escolher horário do lembrete');
  const heading=document.createElement('h2');heading.textContent='🔔 Quando deseja ser avisada?';panel.appendChild(heading);
  const description=document.createElement('p');description.textContent=t.text;description.className='reminderDescription';panel.appendChild(description);
- const options=[[0,'No horário'],[10,'10 minutos antes'],[30,'30 minutos antes'],[60,'1 hora antes (padrão)'],[120,'2 horas antes'],[1440,'1 dia antes']];
+ const options=[[0,'No horário'],[5,'5 minutos antes'],[10,'10 minutos antes'],[15,'15 minutos antes'],[30,'30 minutos antes'],[60,'1 hora antes (padrão)'],[120,'2 horas antes'],[1440,'1 dia antes']];
  const close=()=>overlay.remove();
- options.forEach(([minutes,label])=>{const btn=document.createElement('button');btn.type='button';btn.className='reminderOption'+(reminderMinutes(t)===minutes?' selected':'');btn.textContent=(reminderMinutes(t)===minutes?'✓  ':'')+label;btn.onclick=()=>{close();if(reminderMinutes(t)===minutes)return;t.reminderMinutes=minutes;saveTasks();const s=scheduled();toast('Lembrete ajustado: '+reminderLabel(t));replaceScheduled(t)};panel.appendChild(btn)});
+ options.forEach(([minutes,label])=>{const btn=document.createElement('button');btn.type='button';btn.className='reminderOption'+(reminderMinutes(t)===minutes?' selected':'');btn.textContent=(reminderMinutes(t)===minutes?'✓  ':'')+label;btn.onclick=()=>{close();if(reminderMinutes(t)===minutes)return;t.reminderMinutes=minutes;if(minutes===0)t.reminderAtEvent=false;saveTasks();toast('Lembrete ajustado: '+reminderLabel(t));replaceScheduled(t)};panel.appendChild(btn)});
+ const extra=document.createElement('button');extra.type='button';extra.className='reminderOption';extra.setAttribute('aria-pressed',t.reminderAtEvent?'true':'false');extra.textContent=(t.reminderAtEvent?'☑':'☐')+' Também avisar no horário do compromisso';extra.disabled=reminderMinutes(t)===0;extra.onclick=()=>{t.reminderAtEvent=!t.reminderAtEvent;saveTasks();close();toast('Lembrete ajustado: '+reminderLabel(t));replaceScheduled(t)};panel.appendChild(extra);
  const cancel=document.createElement('button');cancel.type='button';cancel.className='reminderCancel';cancel.textContent='Cancelar';cancel.onclick=close;panel.appendChild(cancel);
  overlay.onclick=e=>{if(e.target===overlay)close()};overlay.appendChild(panel);document.body.appendChild(overlay);
 }
@@ -373,11 +376,11 @@ window.OneSignalDeferred=window.OneSignalDeferred||[];window.oneSignalReady=new 
  const pendentes=checklistItems(t).filter(x=>!x.done).map(x=>String(x.text||'').trim()).filter(Boolean);
  return String(t.text||'Compromisso').slice(0,130)+' • '+horario+(pendentes.length?' • 🎒 Levar: '+pendentes.join(', ').slice(0,145):'');
 }
-async function cancelScheduled(id){
- const record=scheduled()[id];
+async function cancelScheduledKey(id,key){
+ const record=scheduled()[key];
  if(!record)return true;
  if(!record.sendAt||Date.parse(record.sendAt)<=Date.now()){
-  const current=scheduled();if(current[id]&&current[id].sendAt===record.sendAt){delete current[id];saveScheduled(current)}
+  const current=scheduled();if(current[key]&&current[key].sendAt===record.sendAt){delete current[key];saveScheduled(current)}
   return true;
  }
  if(!record.notificationId){rememberNotification('failed',tasks.find(t=>String(t.id)===String(id)),record.sendAt,'Aviso antigo sem identificador');toast('⚠️ Aviso antigo sem identificação. Cancelamento não confirmado.');return false}
@@ -386,27 +389,51 @@ async function cancelScheduled(id){
   const raw=await response.text();let data={};try{data=JSON.parse(raw)}catch(e){}
   if(!response.ok||data.success===false||data.ok===false||data.errors?.length||data.error)throw Error(data.error||'O servidor não confirmou');
   const latest=scheduled();
-  if(latest[id]?.notificationId===record.notificationId){delete latest[id];saveScheduled(latest)}
-  rememberNotification('cancelled',tasks.find(t=>String(t.id)===String(id)),record.sendAt,'Resposta aceita pelo servidor');toast('🔕 Lembrete antigo cancelado.');
-  return true;
+  if(latest[key]?.notificationId===record.notificationId){delete latest[key];saveScheduled(latest)}
+  rememberNotification('cancelled',tasks.find(t=>String(t.id)===String(id)),record.sendAt,'Resposta aceita pelo servidor');return true;
  }catch(e){rememberNotification('failed',tasks.find(t=>String(t.id)===String(id)),record.sendAt,'Cancelamento: '+e.message);toast('⚠️ Não foi possível cancelar o aviso antigo: '+e.message);return false}
+}
+async function cancelScheduled(id){
+ const keys=Object.keys(scheduled()).filter(k=>k===String(id)||k===String(id)+':event');
+ let ok=true;
+ for(const key of keys)if(!await cancelScheduledKey(id,key))ok=false;
+ return ok;
 }
 async function replaceScheduled(t){
  if(!await cancelScheduled(t.id))return;
  if(!t.done&&!t.paused)await scheduleRemote(t);
 }
 function avisarSobreAvisoAnterior(t){
- const registro=scheduled()[t.id];
- if(registro&&registro.sendAt&&Date.parse(registro.sendAt)>Date.now()){
-  toast('⚠️ Um aviso já enviado ao servidor pode continuar ativo, mesmo após editar ou concluir.');
- }
+ const registro=Object.entries(scheduled()).find(([k,v])=>(k===String(t.id)||k===String(t.id)+':event')&&v.sendAt&&Date.parse(v.sendAt)>Date.now());
+ if(registro)toast('⚠️ Um aviso antigo ainda pode continuar ativo.');
 }
-async function scheduleRemote(t){try{if(!shouldSchedule(t))return;if(!('Notification'in window)||Notification.permission!=='granted'){render();return}let s=scheduled();let ev=dueAt(t);if(!ev&&t.recurrence){ev=todayAt(t.time||'08:00');if(ev<Date.now())ev.setDate(ev.getDate()+1)}if(!ev)return;const sendAt=new Date(ev.getTime()-reminderMinutes(t)*60000);if(sendAt.getTime()<Date.now()+90000){render();return}if(s[t.id]&&s[t.id].sendAt===sendAt.toISOString())return;
-if(s[t.id]&&s[t.id].sendAt&&Date.parse(s[t.id].sendAt)>Date.now()){
- toast('⚠️ Já existe aviso futuro para esta tarefa. Não agendei outro para evitar duplicidade; o aviso antigo pode continuar ativo.');
- return;
+async function scheduleRemote(t){
+ try{
+  if(!shouldSchedule(t))return;
+  if(!('Notification'in window)||Notification.permission!=='granted'){render();return}
+  let ev=dueAt(t);
+  if(!ev&&t.recurrence){ev=todayAt(t.time||'08:00');if(ev<Date.now())ev.setDate(ev.getDate()+1)}
+  if(!ev)return;
+  const offsets=reminderOffsets(t);
+  const planned=offsets.map(n=>({n,key:n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id),sendAt:new Date(ev.getTime()-n*60000)}));
+  const current=scheduled();
+  const stale=Object.keys(current).filter(k=>(k===String(t.id)||k===String(t.id)+':event')&&!planned.some(p=>p.key===k&&current[k].sendAt===p.sendAt.toISOString()));
+  for(const key of stale)if(!await cancelScheduledKey(t.id,key))return;
+  for(const p of planned){
+   if(p.sendAt.getTime()<Date.now()+90000)continue;
+   const s=scheduled();
+   if(s[p.key]&&s[p.key].sendAt===p.sendAt.toISOString())continue;
+   if(s[p.key]){toast('⚠️ Aviso anterior ainda ativo. Não criei duplicidade.');continue}
+   const sub=await getSub();
+   const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:notificationMessage(t,ev),sendAfter:p.sendAt.toISOString()})});
+   let j={};try{j=await r.json()}catch(e){}
+   if(!r.ok||j.errors?.length||!j.id&&!j.notification_id)throw Error('servidor não confirmou o identificador do aviso');
+   const latest=scheduled();latest[p.key]={sendAt:p.sendAt.toISOString(),notificationId:j.id||j.notification_id};saveScheduled(latest);
+   rememberNotification('scheduled',t,p.sendAt.toISOString(),'Pedido aceito pelo servidor');
+  }
+  toast('🔔 Avisos solicitados: '+reminderLabel(t));render();
+ }catch(e){rememberNotification('failed',t,'','Agendamento: '+e.message);toast('Tarefa salva, mas aviso não foi agendado: '+e.message);render()}
 }
-let sub=await getSub();let r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:notificationMessage(t,ev),sendAfter:sendAt.toISOString()})});let j={};try{j=await r.json()}catch(e){}if(!r.ok||j.errors?.length||!j.id&&!j.notification_id)throw Error('servidor não confirmou o identificador do aviso');s[t.id]={sendAt:sendAt.toISOString(),notificationId:j.id||j.notification_id};saveScheduled(s);rememberNotification('scheduled',t,sendAt.toISOString(),'Pedido aceito pelo servidor');toast('🔔 Aviso: '+reminderLabel(t));render()}catch(e){rememberNotification('failed',t,'','Agendamento: '+e.message);toast('Tarefa salva, mas aviso não foi agendado: '+e.message);render()}}
 async function enableNotify(){try{let O=await oneSignalReady;await O.Notifications.requestPermission();await getSub();E.notifyStatus.textContent='✅ Notificações autorizadas.';E.notifyBtn.innerHTML='🔔 Notificações<br><b>ativadas</b>';toast('Notificações ativadas.');for(const t of tasks.filter(isActive))await scheduleRemote(t)}catch(e){toast(e.message)}}async function reschedule(id){let t=tasks.find(x=>x.id==id);if(t)await scheduleRemote(t)}
 function agendarCalendario(id) {
   const eventos = tasks.filter(t => !t.done && !t.paused && t.date && t.time);
