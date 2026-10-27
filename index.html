@@ -549,9 +549,20 @@ E.calendarBtn.onclick=agendarCalendario;E.settingsBtn.onclick=()=>toast('⚙️ 
     const remove=document.createElement('button');remove.type='button';remove.className='shopRemove';remove.textContent='✕';remove.setAttribute('aria-label','Remover '+x.name);remove.onclick=()=>{products.splice(x.index,1);save()};
     row.append(cb,label,remove);box.appendChild(row)}wrap.appendChild(box)}
  }
- function openShop(){const v=$s('shopView');v.classList.add('open');v.setAttribute('aria-hidden','false');v.scrollTop=0;renderShop()}
- function closeShop(){stopShopVoice(true);const v=$s('shopView');v.classList.remove('open');v.setAttribute('aria-hidden','true')}
- $s('shopLaunch').addEventListener('click',openShop);$s('shopBack').addEventListener('click',closeShop);
+ function openShop(){const v=$s('shopView');v.style.display='';v.classList.add('open');v.setAttribute('aria-hidden','false');v.scrollTop=0;renderShop()}
+ function closeShop(){
+    const v=$s('shopView');
+    // Fechar imediatamente a tela, independentemente do encerramento do microfone.
+    v.classList.remove('open');
+    v.setAttribute('aria-hidden','true');
+    v.style.display='none';
+    stopShopVoice(true);
+  }
+ $s('shopLaunch').addEventListener('click',openShop);
+  const shopBackButton=$s('shopBack');
+  shopBackButton.addEventListener('click',closeShop);
+  // No iPhone instalado, touchend oferece retorno mesmo se o click demorar/falhar.
+  shopBackButton.addEventListener('touchend',e=>{e.preventDefault();closeShop()},{passive:false});
  $s('shopAdd').addEventListener('click',()=>{const input=$s('shopInput');const names=input.value.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);if(!names.length){input.focus();return}for(const name of names)products.push({name,done:false});input.value='';save()});
  $s('shopClearChecks').addEventListener('click',()=>{products.forEach(p=>p.done=false);save()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$s('shopView').classList.contains('open'))closeShop()});renderShop();
