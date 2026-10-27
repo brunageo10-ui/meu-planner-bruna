@@ -280,7 +280,37 @@ function download(name,rows){const csv=rows.map(r=>r.map(v=>'"'+String(v??'').re
 $('csvBtn').onclick=()=>download('gastos-bruna-geral.csv',csvRows(items));
 $('csvMesBtn').onclick=()=>{const ym=$('mes').value||monthNow();const r=calcMonth();download('fechamento-'+ym+'.csv',csvRows(r.arr,[[],['resumo','entradas',r.entradas],['resumo','gastos',r.saidas],['resumo','saldo',r.saldo],['resumo','lancamentos',r.arr.length]]))};
 $('backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify({items,fechamentos,created:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-gastos-bruna.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
-function startVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Microfone direto não disponível aqui. Digite no campo.');$('quickText').focus();return}const rec=new SR();rec.lang='pt-BR';rec.interimResults=false;rec.maxAlternatives=1;toast('Ouvindo...');rec.onresult=e=>{$('quickText').value=valorFalado(e.results[0][0].transcript);toast('Texto recebido 🎙️')};rec.onerror=()=>toast('Não consegui ouvir. Tente de novo.');rec.onend=()=>{};try{rec.start()}catch(e){toast('Toque novamente no microfone.')}}
+let activeVoiceRec=null,voiceTimeout=null;
+function voiceState(listening){
+  const btn=$('voiceBtn');btn.setAttribute('aria-pressed',listening?'true':'false');
+  btn.style.backgroundColor=listening?'#fbe2eb':'';
+  btn.style.borderColor=listening?'#ab2453':'';
+  const label=btn.lastChild;if(label&&label.nodeType===Node.TEXT_NODE)label.nodeValue=listening?' Ouvindo…':' Falar';
+}
+function closeVoice(rec,abort=false){
+  if(!rec)return;
+  try{abort?rec.abort():rec.stop()}catch(e){}
+}
+function startVoice(){
+  if(activeVoiceRec){closeVoice(activeVoiceRec,true);return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Microfone direto não disponível aqui. Digite no campo.');$('quickText').focus();return}
+  const rec=new SR();rec.lang='pt-BR';rec.interimResults=false;rec.maxAlternatives=1;
+  activeVoiceRec=rec;voiceState(true);toast('Ouvindo... fale seu lançamento.');
+  rec.onresult=e=>{
+    $('quickText').value=valorFalado(e.results[0][0].transcript);
+    toast('Texto recebido 🎙️');
+    closeVoice(rec); // Encerra a escuta assim que a frase é reconhecida.
+  };
+  rec.onerror=e=>{if(e.error!=='aborted'&&e.error!=='no-speech')toast('Não consegui ouvir. Tente de novo.');closeVoice(rec,true)};
+  rec.onend=()=>{
+    if(activeVoiceRec===rec){activeVoiceRec=null;clearTimeout(voiceTimeout);voiceTimeout=null;voiceState(false)}
+  };
+  try{rec.start();voiceTimeout=setTimeout(()=>closeVoice(rec,true),12000)}
+  catch(e){activeVoiceRec=null;clearTimeout(voiceTimeout);voiceTimeout=null;voiceState(false);toast('Toque novamente no microfone.')}
+}
+window.addEventListener('pagehide',()=>closeVoice(activeVoiceRec,true));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)closeVoice(activeVoiceRec,true)});
 $('voiceBtn').onclick=startVoice;
 render();
 // Resumo recolhido ao entrar ou retornar à tela; o usuário pode abri-lo manualmente.
