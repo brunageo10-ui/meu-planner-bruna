@@ -163,6 +163,22 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .entryIntro{margin-top:16px}
 .financePulse{margin-top:22px}
 .monthCard{margin-top:18px}
+
+/* Edição e exclusão de lançamentos individuais */
+.entryManage{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
+.entryManage button{border:1px solid #ebcbd6;border-radius:11px;background:#fce9ef;color:#8a1238;padding:10px 12px;font-size:13px;font-weight:800;min-height:42px}
+.entryManage .entryDelete{background:#fff6f7}
+.groupEntry{align-items:center;gap:10px}
+.editExpenseOverlay{position:fixed;inset:0;z-index:10030;display:flex;align-items:center;justify-content:center;padding:16px;background:#37152699}
+.editExpensePanel{width:min(100%,460px);max-height:90dvh;overflow-y:auto;border-radius:22px;background:#fffafd;padding:20px;color:#42101f;box-shadow:0 14px 40px #27111b55}
+.editExpensePanel h2{margin:0 0 6px;font-size:23px}
+.editExpensePanel p{margin:0 0 13px;color:#806f78;font-size:14px}
+.editExpenseField{display:block;font-size:14px;font-weight:750;margin:11px 0;color:#42101f}
+.editExpenseField input,.editExpenseField select{display:block;width:100%;margin-top:6px;padding:12px;border:1px solid #ddbcc8;border-radius:12px;background:white;color:#331721;font-size:16px}
+.editExpenseActions{display:flex;gap:10px;margin-top:18px}
+.editExpenseActions button{flex:1;border:1px solid #e8c0ce;border-radius:12px;padding:13px 8px;font-size:15px;font-weight:800;background:#fce9ef;color:#8a1238}
+.editExpenseActions button[type=submit]{background:#8a1238;color:white}
+@media(max-width:390px){.groupEntry{flex-wrap:wrap}.entryManage{width:100%;justify-content:flex-start}}
 </style>
 </head>
 <body>
@@ -270,9 +286,53 @@ function monthItems(){const ym=$('mes').value||monthNow();return items.filter(i=
 function calcMonth(){const arr=monthItems();let entradas=0,saidas=0;const cats={};arr.forEach(i=>{const val=Number(i.valor)||0;if(i.tipo==='entrada'){entradas+=val}else{saidas+=val;cats[i.cat||'Outros']=(cats[i.cat||'Outros']||0)+val}});return {arr,entradas,saidas,saldo:entradas-saidas,cats}}
 const groupIncomeIcon="<svg class=\"financeIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v18M5 12h14\"/><circle cx=\"12\" cy=\"12\" r=\"9\"/></svg>";
 const groupExpenseIcon="<svg class=\"financeIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h16v13H4zM4 10h16M16 15h2\"/></svg>";
-function render(){const ym=$('mes').value||monthNow();$('monthLabel').textContent='Visualizando: '+monthName(ym);const r=calcMonth();$('totalIn').textContent=money(r.entradas);$('totalOut').textContent=money(r.saidas);$('saldo').textContent=money(r.saldo);$('saldo').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('pulseIn').textContent=money(r.entradas);$('pulseOut').textContent=money(r.saidas);$('pulseBalance').textContent=money(r.saldo);$('pulseBalance').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('fechamentoBox').innerHTML=`<div class="closeLine"><span>Mês</span><b>${monthName(ym)}</b></div><div class="closeLine"><span>Entradas</span><b style="color:var(--green)">${money(r.entradas)}</b></div><div class="closeLine"><span>Gastos</span><b style="color:var(--red)">${money(r.saidas)}</b></div><div class="closeLine"><span>Saldo final</span><b style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${money(r.saldo)}</b></div><div class="closeLine"><span>Lançamentos</span><b>${r.arr.length}</b></div>`;const catEntries=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]);$('catResumo').innerHTML=catEntries.length?catEntries.map(([c,v])=>`<div class="catRow"><span>${escapeHtml(c)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty">Sem gastos por categoria neste mês.</div>';const saved=fechamentos[ym];$('fechamentoStatus').textContent=saved?'Fechamento salvo em '+new Date(saved.savedAt).toLocaleString('pt-BR')+'.':'Nenhum fechamento salvo para este mês.';const list=$('list');if(!r.arr.length){list.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return}const groups=new Map();r.arr.forEach(i=>{const name=String(i.desc||'Lançamento').trim().replace(/\\s+/g,' ');const key=(i.tipo||'saida')+'|'+name.toLocaleLowerCase('pt-BR');if(!groups.has(key))groups.set(key,{name,tipo:i.tipo,rows:[],total:0});const g=groups.get(key);g.rows.push(i);g.total+=Number(i.valor)||0});list.innerHTML=Array.from(groups.values()).map(g=>`<details class="expenseGroup"><summary><span class="groupName"><span class="groupTitle"><span class="groupIcon ${g.tipo==='entrada'?'groupIncome':'groupExpense'}">${g.tipo==='entrada'?groupIncomeIcon:groupExpenseIcon}</span><span class="groupTitleText">${escapeHtml(g.name)}</span></span><small>${g.rows.length} ${g.rows.length===1?'lançamento':'lançamentos'} • toque para ver</small></span><span class="groupRight"><b class="money ${g.tipo==='entrada'?'in':'out'}">${g.tipo==='entrada'?'+':'-'} ${money(g.total)}</b><span class="groupChevron" aria-hidden="true">⌄</span></span></summary><div class="groupEntries">${g.rows.map(i=>`<div class="groupEntry"><div><div class="meta">${escapeHtml(i.data||'')} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div></div><button class="del" aria-label="Excluir lançamento" onclick="delItem(${i.id})">×</button></div>`).join('')}</div></details>`).join('')}
+function render(){const ym=$('mes').value||monthNow();$('monthLabel').textContent='Visualizando: '+monthName(ym);const r=calcMonth();$('totalIn').textContent=money(r.entradas);$('totalOut').textContent=money(r.saidas);$('saldo').textContent=money(r.saldo);$('saldo').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('pulseIn').textContent=money(r.entradas);$('pulseOut').textContent=money(r.saidas);$('pulseBalance').textContent=money(r.saldo);$('pulseBalance').style.color=r.saldo>=0?'var(--green)':'var(--red)';$('fechamentoBox').innerHTML=`<div class="closeLine"><span>Mês</span><b>${monthName(ym)}</b></div><div class="closeLine"><span>Entradas</span><b style="color:var(--green)">${money(r.entradas)}</b></div><div class="closeLine"><span>Gastos</span><b style="color:var(--red)">${money(r.saidas)}</b></div><div class="closeLine"><span>Saldo final</span><b style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${money(r.saldo)}</b></div><div class="closeLine"><span>Lançamentos</span><b>${r.arr.length}</b></div>`;const catEntries=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]);$('catResumo').innerHTML=catEntries.length?catEntries.map(([c,v])=>`<div class="catRow"><span>${escapeHtml(c)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty">Sem gastos por categoria neste mês.</div>';const saved=fechamentos[ym];$('fechamentoStatus').textContent=saved?'Fechamento salvo em '+new Date(saved.savedAt).toLocaleString('pt-BR')+'.':'Nenhum fechamento salvo para este mês.';const list=$('list');if(!r.arr.length){list.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return}const groups=new Map();r.arr.forEach(i=>{const name=String(i.desc||'Lançamento').trim().replace(/\\s+/g,' ');const key=(i.tipo||'saida')+'|'+name.toLocaleLowerCase('pt-BR');if(!groups.has(key))groups.set(key,{name,tipo:i.tipo,rows:[],total:0});const g=groups.get(key);g.rows.push(i);g.total+=Number(i.valor)||0});list.innerHTML=Array.from(groups.values()).map(g=>`<details class="expenseGroup"><summary><span class="groupName"><span class="groupTitle"><span class="groupIcon ${g.tipo==='entrada'?'groupIncome':'groupExpense'}">${g.tipo==='entrada'?groupIncomeIcon:groupExpenseIcon}</span><span class="groupTitleText">${escapeHtml(g.name)}</span></span><small>${g.rows.length} ${g.rows.length===1?'lançamento':'lançamentos'} • toque para ver</small></span><span class="groupRight"><b class="money ${g.tipo==='entrada'?'in':'out'}">${g.tipo==='entrada'?'+':'-'} ${money(g.total)}</b><span class="groupChevron" aria-hidden="true">⌄</span></span></summary><div class="groupEntries">${g.rows.map(i=>`<div class="groupEntry"><div><div class="meta">${escapeHtml(i.data||'')} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div></div><div class="entryManage"><button type="button" class="entryEdit" onclick="editItem(${i.id})">✏️ Editar</button><button type="button" class="entryDelete" onclick="delItem(${i.id})">🗑️ Excluir</button></div></div>`).join('')}</div></details>`).join('')}
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-window.delItem=id=>{items=items.filter(i=>i.id!==id);save();render();toast('Lançamento apagado.')}
+window.editItem=id=>{
+ const item=items.find(i=>String(i.id)===String(id));if(!item)return toast('Lançamento não encontrado.');
+ document.getElementById('editExpenseOverlay')?.remove();
+ const overlay=document.createElement('div');overlay.id='editExpenseOverlay';overlay.className='editExpenseOverlay';
+ const form=document.createElement('form');form.className='editExpensePanel';form.setAttribute('role','dialog');form.setAttribute('aria-modal','true');form.setAttribute('aria-label','Editar lançamento');
+ const title=document.createElement('h2');title.textContent='✏️ Editar lançamento';form.appendChild(title);
+ const subtitle=document.createElement('p');subtitle.textContent='Corrija os dados e toque em Salvar alterações.';form.appendChild(subtitle);
+ function field(label,kind,value,options){
+  const wrap=document.createElement('label');wrap.className='editExpenseField';wrap.textContent=label;
+  const input=document.createElement(kind==='select'?'select':'input');
+  if(kind!=='select')input.type=kind;
+  if(kind==='select'){
+   options.forEach(opt=>{const o=document.createElement('option');o.value=opt;o.textContent=opt;input.appendChild(o)});
+   if(!options.includes(value)){const o=document.createElement('option');o.value=value;o.textContent=value;input.appendChild(o)}
+  }
+  input.value=value;wrap.appendChild(input);form.appendChild(wrap);return input;
+ }
+ const type=field('Tipo de movimentação','select',item.tipo==='entrada'?'Entrada':'Gasto',['Gasto','Entrada']);
+ const value=field('Valor (R$)','text',Number(item.valor||0).toFixed(2).replace('.',','));
+ value.inputMode='decimal';
+ const desc=field('Descrição','text',item.desc||'');
+ const date=field('Data','date',item.data||today());
+ const cat=field('Categoria','select',item.cat||'Outros',['Casa','Alimentação','Transporte','Escola','SGS Vinho & Café','Saúde','Lazer','Recebimentos','Outros']);
+ const forma=field('Forma de pagamento','select',item.forma||'Pix',['Pix','Cartão','Dinheiro','Débito','Crédito','Outro']);
+ const buttons=document.createElement('div');buttons.className='editExpenseActions';
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.onclick=()=>overlay.remove();
+ const saveBtn=document.createElement('button');saveBtn.type='submit';saveBtn.textContent='Salvar alterações';
+ buttons.append(cancel,saveBtn);form.appendChild(buttons);
+ form.onsubmit=ev=>{
+  ev.preventDefault();
+  const amount=parseValor(value.value);if(!Number.isFinite(amount)||amount<=0){value.focus();return toast('Digite um valor válido.')}
+  if(!desc.value.trim()){desc.focus();return toast('Digite a descrição.')}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date.value)){date.focus();return toast('Escolha uma data válida.')}
+  item.tipo=type.value==='Entrada'?'entrada':'saida';
+  item.valor=amount;item.desc=desc.value.trim().slice(0,200);item.data=date.value;item.cat=cat.value;item.forma=forma.value;
+  save();render();overlay.remove();toast('✅ Lançamento atualizado.');
+ };
+ overlay.appendChild(form);overlay.addEventListener('click',ev=>{if(ev.target===overlay)overlay.remove()});
+ document.body.appendChild(overlay);value.focus();
+};
+window.delItem=id=>{
+ const item=items.find(i=>String(i.id)===String(id));if(!item)return toast('Lançamento não encontrado.');
+ if(!confirm('Excluir o lançamento "'+String(item.desc||'Lançamento')+'" de '+money(item.valor)+'? Esta ação não pode ser desfeita.'))return;
+ items=items.filter(i=>String(i.id)!==String(id));save();render();toast('Lançamento excluído.');
+}
 function salvarFechamento(){const ym=$('mes').value||monthNow();const r=calcMonth();fechamentos[ym]={mes:ym,entradas:r.entradas,saidas:r.saidas,saldo:r.saldo,lancamentos:r.arr.length,categorias:r.cats,savedAt:new Date().toISOString()};saveClosings();render();toast('Fechamento salvo 📌')}
 $('fecharBtn').onclick=salvarFechamento;
 function csvRows(arr,extra){return [['data','tipo','valor','descricao','categoria','forma'],...arr.map(i=>[i.data,i.tipo,i.valor,i.desc,i.cat,i.forma]),...(extra||[])]}
