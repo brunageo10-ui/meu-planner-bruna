@@ -406,7 +406,69 @@ function toggle(id){let t=tasks.find(x=>x.id==id);if(!t)return;const wasDone=t.d
 function priority(id){let t=tasks.find(x=>x.id==id);if(!t)return;t.priority=!t.priority;saveTasks();toast(t.priority?'⭐ Marcada como prioridade.':'☆ Prioridade removida.')}
 function toggleRoutine(id){let t=tasks.find(x=>x.id==id);if(!t)return;t.paused=!t.paused;saveTasks();if(t.paused)cancelScheduled(t.id);else replaceScheduled(t)}
 function delItem(id){const t=tasks.find(x=>x.id==id);tasks=tasks.filter(x=>x.id!=id);saveTasks();toast('Item apagado.');if(t)cancelScheduled(t.id)}
-function edit(id){let t=tasks.find(x=>x.id==id);if(!t)return;let txt=prompt('Edite a tarefa ou rotina:',t.text);if(txt===null)return;txt=txt.trim();if(!txt)return;Object.assign(t,makeItem(txt,t));saveTasks();replaceScheduled(t)}
+function edit(id){
+ const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;
+ if(isRoutine(t)){
+  const txt=prompt('Edite a rotina:',t.text);
+  if(txt===null||!txt.trim())return;
+  Object.assign(t,makeItem(txt.trim(),t));saveTasks();replaceScheduled(t);return;
+ }
+ document.getElementById('editTaskModal')?.remove();
+ const overlay=document.createElement('div');
+ overlay.id='editTaskModal';
+ overlay.style.cssText='position:fixed;inset:0;z-index:10010;background:#30101999;display:flex;align-items:center;justify-content:center;padding:16px';
+ const panel=document.createElement('form');
+ panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
+ panel.setAttribute('aria-label','Editar compromisso');
+ panel.style.cssText='width:min(100%,430px);max-height:90vh;overflow:auto;background:#fffafc;border-radius:22px;padding:20px;box-shadow:0 15px 40px #30101955;color:#461f30';
+ const heading=document.createElement('h2');heading.textContent='✏️ Editar compromisso';heading.style.cssText='font-size:21px;margin:0 0 16px';panel.appendChild(heading);
+ function field(label,type,value){
+  const wrap=document.createElement('label');wrap.style.cssText='display:block;font-weight:700;font-size:15px;margin:12px 0';
+  wrap.textContent=label;
+  const input=document.createElement('input');input.type=type;input.value=value||'';
+  input.style.cssText='display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
+  wrap.appendChild(input);panel.appendChild(wrap);return input;
+ }
+ const nome=field('Nome da atividade','text',t.text);
+ const data=field('Data','date',t.date);
+ const hora=field('Horário','time',t.time);
+ const avisoLabel=document.createElement('label');avisoLabel.textContent='🔔 Avisar antes';avisoLabel.style.cssText='display:block;font-weight:700;margin:12px 0';
+ const aviso=document.createElement('select');
+ aviso.style.cssText='display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
+ [[0,'No horário'],[5,'5 minutos antes'],[10,'10 minutos antes'],[15,'15 minutos antes'],[30,'30 minutos antes'],[60,'1 hora antes'],[120,'2 horas antes'],[1440,'1 dia antes']].forEach(([value,label])=>{
+  const opt=document.createElement('option');opt.value=value;opt.textContent=label;aviso.appendChild(opt);
+ });
+ aviso.value=String(reminderMinutes(t));avisoLabel.appendChild(aviso);panel.appendChild(avisoLabel);
+ const noHorario=document.createElement('label');noHorario.style.cssText='display:flex;gap:10px;align-items:center;font-weight:700;margin:15px 0';
+ const checkHorario=document.createElement('input');checkHorario.type='checkbox';checkHorario.checked=t.reminderAtEvent!==false;checkHorario.style.cssText='width:22px;height:22px;flex:none';noHorario.appendChild(checkHorario);
+ noHorario.appendChild(document.createTextNode('Também avisar no horário do compromisso'));panel.appendChild(noHorario);
+ const prioridade=document.createElement('label');prioridade.style.cssText='display:flex;gap:10px;align-items:center;font-weight:700;margin:15px 0';
+ const checkPrioridade=document.createElement('input');checkPrioridade.type='checkbox';checkPrioridade.checked=!!t.priority;checkPrioridade.style.cssText='width:22px;height:22px;flex:none';prioridade.appendChild(checkPrioridade);
+ prioridade.appendChild(document.createTextNode('⭐ Compromisso prioritário'));panel.appendChild(prioridade);
+ const buttons=document.createElement('div');buttons.style.cssText='display:flex;gap:10px;margin-top:20px';
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';
+ const confirm=document.createElement('button');confirm.type='submit';confirm.textContent='Salvar alterações';
+ for(const btn of [cancel,confirm])btn.style.cssText='flex:1;padding:13px 8px;border:1px solid #e9c4d0;border-radius:13px;font-size:15px;font-weight:700;background:#fae7ee;color:#90133e';
+ confirm.style.background='#90133e';confirm.style.color='white';
+ const close=()=>overlay.remove();cancel.onclick=close;
+ buttons.append(cancel,confirm);panel.appendChild(buttons);
+ aviso.onchange=()=>{checkHorario.disabled=aviso.value==='0';if(aviso.value==='0')checkHorario.checked=false};
+ aviso.dispatchEvent(new Event('change'));
+ panel.onsubmit=ev=>{
+  ev.preventDefault();const name=nome.value.trim();
+  if(!name)return alert('Digite o nome da atividade.');
+  if(data.value&& !hora.value)return alert('Informe o horário do compromisso.');
+  const when=data.value&&hora.value?new Date(data.value+'T'+hora.value):null;
+  if(when&&Number.isNaN(when.getTime()))return alert('Data ou horário inválido.');
+  t.text=name;t.date=data.value;t.time=hora.value;t.priority=checkPrioridade.checked;
+  t.reminderMinutes=Number(aviso.value);t.reminderAtEvent=aviso.value!=='0'&&checkHorario.checked;
+  t.reminderSuggested=false;
+  const classification=classify(name);t.cat=classification.cat;t.sub=classification.sub;
+  saveTasks();close();toast('✅ Compromisso atualizado. Verificando os avisos…');replaceScheduled(t);
+ };
+ overlay.addEventListener('click',ev=>{if(ev.target===overlay)close()});
+ overlay.appendChild(panel);document.body.appendChild(overlay);nome.focus();
+}
 function showMic(title,hint,listening=false){E.micBox.classList.add('on');E.micBox.classList.toggle('listening',listening);E.voice.classList.toggle('isListening',listening);E.voice.setAttribute('aria-pressed',listening?'true':'false');E.micTitle.textContent=title;E.micHint.textContent=hint}function startDictation(ev){if(ev){ev.preventDefault();ev.stopPropagation()}E.input.focus();let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){try{let r=new SR();r.lang='pt-BR';r.interimResults=false;r.continuous=false;r.onstart=()=>showMic('Ouvindo de verdade...','Fale sua tarefa agora.',true);r.onresult=e=>{E.input.value=e.results[0][0].transcript;showMic('Texto recebido','Revise e toque em Organizar automaticamente.',false)};r.onerror=()=>{showMic('Use o microfone do teclado','O iPhone bloqueou o ditado automático. Toque no microfone do teclado.',false);toast('Toque no microfone do teclado do iPhone.')};r.start();return false}catch(e){}}showMic('Use o microfone do teclado','Toque no microfone do teclado do iPhone e fale sua tarefa.',false);toast('🎙️ Toque no microfone do teclado do iPhone.');return false}E.input.addEventListener('input',()=>{if(E.input.value.trim())showMic('Texto recebido','Revise e toque em Organizar automaticamente.',false)});
 function renderSearch(){if(!E.searchPanel.classList.contains('open'))return;let q=norm(E.searchInput.value||'');if(!q){E.searchResults.innerHTML='<div class="result">Digite uma palavra para buscar.</div>';return}let found=tasks.filter(t=>norm([t.text,label(t.cat),t.sub,t.date,t.time,t.priority?'prioridade':''].join(' ')).includes(q)).slice(0,20);E.searchResults.innerHTML=found.length?found.map(t=>`<div class="result"><b>${esc(t.text)}</b><div class="meta"><span class="tag">${esc(label(t.cat))}</span>${t.time?`<span class="t">🕐 ${t.time}</span>`:''}${t.priority?'<span class="prioTag">⭐ Prioridade</span>':''}</div><button class="searchAct" onclick="priority(${t.id})">${t.priority?'Remover ⭐':'Marcar ⭐'}</button> <button class="searchAct" onclick="edit(${t.id})">✎ Editar</button></div>`).join(''):'<div class="result">Nada encontrado.</div>'}
 function findFolderByName(n){let x=norm(n);return folders.find(c=>norm(label(c))===x||norm(c)===x)}function editFolders(){let op=prompt('Gerenciar pastas:\n1 - Adicionar\n2 - Renomear\n3 - Excluir','1');if(!op)return;if(op==='1'){let n=prompt('Nome da nova pasta:','');if(n&&!findFolderByName(n)){folders.push(n);localStorage.brunaFolders=JSON.stringify(folders);render();toast('📁 Pasta criada.')}}else if(op==='2'){let old=prompt('Qual pasta deseja renomear?','');let f=findFolderByName(old);if(!f||f==='Tudo')return toast('Não encontrei essa pasta.');let n=prompt('Novo nome:',label(f));if(!n)return;if(DEFAULT.includes(f))catNames[f]=n;else{tasks.forEach(t=>{if(t.cat===f)t.cat=n});folders[folders.indexOf(f)]=n;if(active===f)active=n}localStorage.brunaCategoryNames=JSON.stringify(catNames);localStorage.brunaFolders=JSON.stringify(folders);saveTasks()}else if(op==='3'){let old=prompt('Qual pasta deseja excluir?','');let f=findFolderByName(old);if(!f||f==='Tudo')return toast('Não encontrei essa pasta.');tasks.forEach(t=>{if(t.cat===f)t.cat='Pessoal'});folders=folders.filter(c=>c!==f);localStorage.brunaFolders=JSON.stringify(folders);saveTasks()}}
