@@ -527,6 +527,10 @@ function adicionarEventoCalendario(t) {
   descricao.textContent = t.text + ' • ' + new Date(t.date+'T12:00').toLocaleDateString('pt-BR') + ' às ' + t.time;
   descricao.style.cssText = 'font-size:13px;line-height:1.5;color:#786b72;margin:0 0 16px;overflow-wrap:anywhere';
   painel.appendChild(descricao);
+  const avisoCalendario = document.createElement('p');
+  avisoCalendario.textContent = 'Alertas do compromisso: ' + reminderLabel(t) + '. No iPhone, abra o arquivo baixado e confirme a inclusão no Calendário. Confira os alertas antes de salvar.';
+  avisoCalendario.style.cssText = 'font-size:13px;line-height:1.5;color:#786b72;margin:0 0 16px;overflow-wrap:anywhere';
+  painel.appendChild(avisoCalendario);
   const fechar = () => fundo.remove();
   [['1','📱 iPhone — Calendário Apple'],['2','📱 Android — Google Agenda'],['3','🗓️ Usar os dois calendários']].forEach(([valor,rotulo]) => {
     const botao = document.createElement('button');
@@ -560,7 +564,16 @@ function adicionarEventoCalendario(t) {
       'PRODID:-//Meu Planner Bruna//PT-BR', 'BEGIN:VEVENT',
       'UID:planner-' + t.id + '@bruna', 'DTSTAMP:' + formato(new Date()),
       'DTSTART:' + formato(inicio), 'DTEND:' + formato(fim),
-      'SUMMARY:' + escapar(t.text), 'END:VEVENT', 'END:VCALENDAR'];
+      'SUMMARY:' + escapar(t.text)];
+    const alarmes = [...new Set(reminderOffsets(t))];
+    for (const minutos of alarmes) {
+      linhas.push('BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:' + escapar(t.text),
+        'TRIGGER:' + (minutos === 0 ? 'PT0S' : '-PT' + minutos + 'M'),
+        'END:VALARM');
+    }
+    linhas.push('END:VEVENT', 'END:VCALENDAR');
     const url = URL.createObjectURL(new Blob([linhas.join('\r\n')], {type: 'text/calendar;charset=utf-8'}));
     const link = document.createElement('a');
     link.href = url;
