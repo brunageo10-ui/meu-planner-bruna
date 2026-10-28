@@ -253,6 +253,22 @@ main{max-width:100%;overflow-x:clip!important}
 #foldersBtn{margin-left:5px}
 .filters .chip{white-space:nowrap}
 @media(max-width:420px){#newFolderBtn,#foldersBtn{font-size:11px;padding:10px 8px}}
+
+.folderOverlay{position:fixed;inset:0;z-index:10030;background:rgba(39,14,25,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.folderDialog{width:min(100%,460px);max-height:86dvh;overflow:auto;background:#fffafd;border:1px solid #eac9d4;border-radius:24px;padding:18px;color:#42101f;box-shadow:0 16px 40px #39132155}
+.folderDialogHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.folderDialogHead h2{font-size:22px;margin:0}
+.folderClose{border:0;border-radius:50%;width:42px;height:42px;background:#fce7ee;color:#8a1238;font-weight:850;font-size:20px;flex-shrink:0}
+.folderDialogHelp{font-size:15px;line-height:1.4;color:#806a73;margin:9px 0 15px}
+.folderCreateAction,.folderDone{width:100%;border:0;border-radius:14px;padding:15px 12px;font-size:16px;font-weight:800;background:#8a1238;color:white}
+.folderManagerList{display:grid;gap:9px;margin:15px 0}
+.folderManagerRow{background:#fff;border:1px solid #ead5dd;border-radius:14px;padding:11px}
+.folderManagerName{font-size:16px;font-weight:750;overflow-wrap:anywhere;margin-bottom:9px}
+.folderManagerActions{display:flex;gap:8px;flex-wrap:wrap}
+.folderManagerActions button{flex:1;border:1px solid #e8bfd0;background:#fce9ef;color:#8a1238;border-radius:10px;padding:10px 8px;font-size:14px;font-weight:750}
+.folderManagerActions .folderDeleteAction{background:#fff5f6}
+.folderDone{background:#fce9ef;color:#8a1238}
+
 </style>
 </head>
 <body>
@@ -506,30 +522,51 @@ function createFolder(){
  document.getElementById('filters')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function editFolders(){
- const op=prompt('📁 Gerenciar pastas:\\n1 — Criar nova pasta\\n2 — Renomear pasta\\n3 — Excluir pasta','2');
- if(op===null)return;
- if(op==='1')return createFolder();
- if(op==='2'){
-  const old=prompt('Qual pasta deseja renomear?','');if(old===null)return;
-  const f=findFolderByName(old);if(!f||f==='Tudo')return toast('Pasta não encontrada.');
-  const answer=prompt('Novo nome da pasta:',label(f));if(answer===null)return;
-  const n=answer.trim().slice(0,50);if(!n)return toast('Digite um nome.');
-  const duplicate=findFolderByName(n);if(duplicate&&duplicate!==f)return toast('Já existe uma pasta com esse nome.');
-  if(DEFAULT.includes(f))catNames[f]=n;
-  else{tasks.forEach(t=>{if(t.cat===f)t.cat=n});folders[folders.indexOf(f)]=n;if(active===f)active=n}
-  localStorage.brunaCategoryNames=JSON.stringify(catNames);localStorage.brunaFolders=JSON.stringify(folders);saveTasks();toast('✏️ Pasta renomeada.');return;
- }
- if(op==='3'){
-  const old=prompt('Qual pasta deseja excluir?','');if(old===null)return;
-  const f=findFolderByName(old);
-  if(!f||f==='Tudo')return toast('Pasta não encontrada.');
-  if(DEFAULT.includes(f))return toast('Esta pasta padrão pode ser renomeada, mas não excluída.');
-  const count=tasks.filter(t=>t.cat===f).length;
-  if(!confirm('Excluir a pasta '+label(f)+'? '+count+' tarefa(s) serão movidas para Pessoal, sem serem apagadas.'))return;
-  tasks.forEach(t=>{if(t.cat===f)t.cat='Pessoal'});
-  folders=folders.filter(c=>c!==f);if(active===f)active='Tudo';
-  localStorage.brunaFolders=JSON.stringify(folders);saveTasks();toast('Pasta excluída. Tarefas preservadas em Pessoal.');
- }
+ document.getElementById('folderManagerModal')?.remove();
+ const overlay=document.createElement('div');overlay.id='folderManagerModal';overlay.className='folderOverlay';
+ const panel=document.createElement('section');panel.className='folderDialog';
+ panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Gerenciar pastas');
+ const head=document.createElement('div');head.className='folderDialogHead';
+ const title=document.createElement('h2');title.textContent='📁 Gerenciar pastas';
+ const closeButton=document.createElement('button');closeButton.type='button';closeButton.className='folderClose';closeButton.textContent='✕';closeButton.setAttribute('aria-label','Fechar');
+ closeButton.onclick=()=>overlay.remove();head.append(title,closeButton);panel.appendChild(head);
+ const help=document.createElement('p');help.textContent='Toque na ação desejada. Não é preciso digitar números.';help.className='folderDialogHelp';panel.appendChild(help);
+ const add=document.createElement('button');add.type='button';add.className='folderCreateAction';add.textContent='＋ Adicionar nova pasta';
+ add.onclick=()=>{overlay.remove();createFolder()};panel.appendChild(add);
+ const list=document.createElement('div');list.className='folderManagerList';
+ folders.filter(f=>f!=='Tudo').forEach(f=>{
+  const row=document.createElement('div');row.className='folderManagerRow';
+  const name=document.createElement('div');name.className='folderManagerName';name.textContent='📁 '+label(f);
+  const actions=document.createElement('div');actions.className='folderManagerActions';
+  const rename=document.createElement('button');rename.type='button';rename.textContent='✏️ Renomear';
+  rename.onclick=()=>{
+   const answer=prompt('Novo nome para a pasta '+label(f)+':',label(f));if(answer===null)return;
+   const n=answer.trim().slice(0,50);if(!n)return toast('Digite um nome.');
+   const duplicate=findFolderByName(n);if(duplicate&&duplicate!==f)return toast('Já existe uma pasta com esse nome.');
+   if(DEFAULT.includes(f))catNames[f]=n;
+   else{tasks.forEach(t=>{if(t.cat===f)t.cat=n});folders[folders.indexOf(f)]=n;if(active===f)active=n}
+   localStorage.brunaCategoryNames=JSON.stringify(catNames);localStorage.brunaFolders=JSON.stringify(folders);
+   saveTasks();overlay.remove();editFolders();toast('✏️ Pasta renomeada.');
+  };
+  actions.appendChild(rename);
+  if(!DEFAULT.includes(f)){
+   const del=document.createElement('button');del.type='button';del.textContent='🗑️ Excluir';del.className='folderDeleteAction';
+   del.onclick=()=>{
+    const count=tasks.filter(t=>t.cat===f).length;
+    if(!confirm('Excluir a pasta '+label(f)+'? '+count+' tarefa(s) serão movidas para Pessoal e não serão apagadas.'))return;
+    tasks.forEach(t=>{if(t.cat===f)t.cat='Pessoal'});
+    folders=folders.filter(c=>c!==f);if(active===f)active='Tudo';
+    localStorage.brunaFolders=JSON.stringify(folders);saveTasks();
+    overlay.remove();editFolders();toast('Pasta excluída. Tarefas preservadas em Pessoal.');
+   };
+   actions.appendChild(del);
+  }
+  row.append(name,actions);list.appendChild(row);
+ });
+ panel.appendChild(list);
+ const done=document.createElement('button');done.type='button';done.className='folderDone';done.textContent='Concluir';done.onclick=()=>overlay.remove();panel.appendChild(done);
+ overlay.appendChild(panel);overlay.addEventListener('click',ev=>{if(ev.target===overlay)overlay.remove()});
+ document.body.appendChild(overlay);closeButton.focus();
 }
 function backup(){let a=document.createElement('a'),blob=new Blob([JSON.stringify({version:VERSION,tasks,folders,catNames},null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='meu-planner-bruna-backup-'+dk()+'.json';a.click()}function importBackup(f){if(!f)return;let r=new FileReader();r.onload=()=>{let d=JSON.parse(r.result);if(Array.isArray(d.tasks)){tasks=d.tasks;folders=[...DEFAULT];(d.folders||[]).forEach(x=>{if(x&&!folders.includes(x))folders.push(x)});catNames=d.catNames||{};localStorage.brunaTasks=JSON.stringify(tasks);localStorage.brunaFolders=JSON.stringify(folders);localStorage.brunaCategoryNames=JSON.stringify(catNames);render();toast('Backup importado.')}};r.readAsText(f)}
 window.OneSignalDeferred=window.OneSignalDeferred||[];window.oneSignalReady=new Promise(res=>{window.OneSignalDeferred.push(async O=>{await O.init({appId:APP_ID,serviceWorkerParam:{scope:'./'},serviceWorkerPath:'OneSignalSDKWorker.js'});res(O)})});function shouldSchedule(t){return !t.done&&!t.paused&&(t.recurrence||t.time)}async function getSub(){let O=await oneSignalReady;if(Notification.permission!=='granted')throw Error('Permita as notificações em Ferramentas.');try{await O.User.PushSubscription.optIn()}catch(e){}for(let i=0;i<10;i++){let id=O.User?.PushSubscription?.id;if(id)return id;await new Promise(r=>setTimeout(r,500))}throw Error('Abra pela Tela Inicial e ative as notificações.')}function notificationMessage(t,ev){
