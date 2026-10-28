@@ -293,6 +293,26 @@ function showNotificationHistory(){
  }));
 }
 function scheduled(){return loadJSON('brunaScheduled',{})}function saveScheduled(o){localStorage.brunaScheduled=JSON.stringify(o)}
+function offlineReminderIds(){const a=loadJSON('brunaOfflineReminderIds',[]);return Array.isArray(a)?a:[]}
+function markOfflineReminder(id){const ids=new Set(offlineReminderIds().map(String));ids.add(String(id));localStorage.brunaOfflineReminderIds=JSON.stringify([...ids])}
+function clearOfflineReminder(id){localStorage.brunaOfflineReminderIds=JSON.stringify(offlineReminderIds().filter(x=>String(x)!==String(id)))}
+let offlineRetryBusy=false;
+async function retryOfflineReminders(){
+ if(offlineRetryBusy||!navigator.onLine)return;
+ const ids=offlineReminderIds();if(!ids.length)return;
+ offlineRetryBusy=true;
+ try{
+  for(const id of ids){
+   if(!navigator.onLine)break;
+   const t=tasks.find(x=>String(x.id)===String(id));
+   if(t&&!t.done&&!t.paused)await scheduleRemote(t);
+   else if(await cancelScheduled(id))clearOfflineReminder(id);
+  }
+ }finally{offlineRetryBusy=false;render()}
+}
+window.addEventListener('online',()=>{toast('📶 Conexão retomada. Verificando lembretes pendentes.');retryOfflineReminders()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&navigator.onLine)retryOfflineReminders()});
+
 function classify(text){let s=norm(text),cat='Pessoal',sub='';let custom=folders.find(c=>c!=='Tudo'&&!DEFAULT.includes(c)&&s.includes(norm(label(c))));if(custom){cat=custom}else if(/beber\s+agua|tomar\s+agua|hidratar|vitamina|remedio|exercicio|caminhar|academia/.test(s)){cat='Hábitos'}else if(/sgs|vinho|vinicola|cafe|queijo|reels|story|instagram|turis|fazenda|degustacao|cliente|roteiro|tour/.test(s)){cat='SGS Vinho & Café';sub=/reels|story|instagram/.test(s)?'Conteúdo':'Experiências'}else if(/alun|prova|avaliacao|geografia|apostila|bncc|aula|escola|dever|atividade|imprimir/.test(s)){cat='Escola';sub=/prova|avaliacao/.test(s)?'Avaliações':'Planejamento'}else if(/boleto|fatura|pagar|energia|luz|internet|cartao|conta\s+de\s+agua/.test(s)){cat='Contas';sub='Pagamentos'}else if(/comprar|mercado|farmacia|compra/.test(s))cat='Compras';else if(/reuniao|consulta|dentista|medico|evento|compromisso|unha|banho/.test(s))cat='Compromissos';return{cat,sub}}
 const DAYS={domingo:0,segunda:1,terca:2,terça:2,quarta:3,quinta:4,sexta:5,sabado:6,sábado:6};function nextDay(day){let d=new Date(),diff=(day-d.getDay()+7)%7;if(diff===0)diff=7;d.setDate(d.getDate()+diff);return d}
 function parseDate(text){let s=norm(text),d=new Date(),m=s.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);if(m){let y=m[3]?Number(m[3]):d.getFullYear();if(y<100)y+=2000;return `${y}-${pad(m[2])}-${pad(m[1])}`}if(s.includes('amanha')){d.setDate(d.getDate()+1);return dk(d)}if(s.includes('hoje'))return dk(d);for(let k in DAYS)if(s.includes(k))return dk(nextDay(DAYS[k]));m=s.match(/\bdia\s+(\d{1,2})\b/);if(m&&!/todo|todos|mensal/.test(s)){let day=Number(m[1]);d.setDate(1);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));if(d<new Date(Date.now()-86400000)){d.setMonth(d.getMonth()+1,1);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()))}return dk(d)}return''}
@@ -301,7 +321,26 @@ function parseRecurrence(text){let s=norm(text),m=s.match(/\b(?:todo\s+dia|todos
 function dateForTime(time){let d=new Date(),p=time.split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+60000)d.setDate(d.getDate()+1);return dk(d)}
 function makeItem(text,old={}){let c=classify(text),time=parseTime(text),rec=parseRecurrence(text);if(rec&&!time)time='08:00';let date=rec?'':(parseDate(text)||(time?dateForTime(time):''));return{id:old.id||Date.now(),text,cat:c.cat,sub:c.sub,date,time,recurrence:rec,paused:!!old.paused,done:!!old.done,priority:!!old.priority,checklist:Array.isArray(old.checklist)?old.checklist:[],reminderMinutes:old.reminderMinutes===undefined?60:old.reminderMinutes,reminderAtEvent:old.reminderAtEvent===undefined?true:!!old.reminderAtEvent,created:old.created||new Date().toISOString()}}
 function isRoutine(t){return !!t.recurrence}function isActive(t){return !t.done&&!t.paused}function dueAt(t){if(t.date||t.time){let d=t.date?new Date(t.date+'T'+(t.time||'08:00')):new Date();if(!t.date){let p=(t.time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d<Date.now())d.setDate(d.getDate()+1)}return d}return null}function todayAt(time){let d=new Date(),p=(time||'23:59').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);return d}function routineToday(t){let r=t.recurrence,d=new Date();if(!r)return false;if(r.type==='daily')return true;if(r.type==='weekly')return d.getDay()===r.day;if(r.type==='monthly')return d.getDate()===r.day;return false}
-function reminderTag(t){if(!t.time||t.done)return'';let ev=dueAt(t);if(ev&&ev.getTime()<Date.now())return'<span class="warnTag">⏰ horário passou</span>';let s=scheduled();const ok=reminderOffsets(t).every(n=>{const key=n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id);const sendAt=new Date(ev.getTime()-n*60000).toISOString();return s[key]&&s[key].sendAt===sendAt});if(ok)return'<span class="rem">🔔 '+reminderLabel(t)+'</span>';if(!('Notification' in window))return'<span class="warnTag">🔕 sem notificação</span>';if(Notification.permission==='granted')return`<button class="warnTag" onclick="reschedule(${t.id})">⚠️ agendar aviso</button>`;return'<button class="warnTag" onclick="enableNotify()">🔔 ativar notificações</button>'}
+function reminderTag(t){
+ if(!t.time||t.done)return'';
+ const ev=dueAt(t);if(!ev)return'';
+ if(ev.getTime()<Date.now())return'<span class="warnTag">⏰ horário passou</span>';
+ const rec=scheduled(), now=Date.now();
+ const pieces=reminderOffsets(t).map(n=>{
+  const key=n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id);
+  const when=new Date(ev.getTime()-n*60000).toISOString();
+  const label=n===0?'no horário':n===60?'1h antes':n===1440?'1 dia antes':n+'min antes';
+  if(rec[key]?.sendAt===when)return'<span class="rem">🔔 '+label+' solicitado</span>';
+  if(Date.parse(when)<=now+90000)return'<span class="warnTag">⏳ '+label+' sem confirmação</span>';
+  return'<span class="warnTag">⚠️ '+label+' não confirmado</span>';
+ }).join('');
+ const complete=reminderOffsets(t).every(n=>{const key=n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id);return rec[key]?.sendAt===new Date(ev.getTime()-n*60000).toISOString()});
+ if(complete)return pieces;
+ if(!('Notification' in window))return pieces+'<span class="warnTag">🔕 notificações indisponíveis</span>';
+ if(Notification.permission!=='granted')return pieces+'<button class="warnTag" onclick="enableNotify()">🔔 ativar notificações</button>';
+ if(!navigator.onLine)return pieces+'<span class="warnTag">📶 sem conexão — aguardando</span>';
+ return pieces+'<button class="warnTag" onclick="reschedule('+JSON.stringify(t.id)+')">↻ verificar avisos</button>';
+}
 function renderMyDay(){
  const host=document.getElementById('myDayContent');if(!host)return;
  const today=dk(),now=Date.now();
@@ -394,9 +433,11 @@ async function cancelScheduledKey(id,key){
  }catch(e){rememberNotification('failed',tasks.find(t=>String(t.id)===String(id)),record.sendAt,'Cancelamento: '+e.message);toast('⚠️ Não foi possível cancelar o aviso antigo: '+e.message);return false}
 }
 async function cancelScheduled(id){
+ if(!navigator.onLine){markOfflineReminder(id);toast('📶 Sem conexão. Cancelamento pendente.');return false}
  const keys=Object.keys(scheduled()).filter(k=>k===String(id)||k===String(id)+':event');
  let ok=true;
  for(const key of keys)if(!await cancelScheduledKey(id,key))ok=false;
+ if(ok)clearOfflineReminder(id);
  return ok;
 }
 async function replaceScheduled(t){
@@ -407,9 +448,12 @@ function avisarSobreAvisoAnterior(t){
  const registro=Object.entries(scheduled()).find(([k,v])=>(k===String(t.id)||k===String(t.id)+':event')&&v.sendAt&&Date.parse(v.sendAt)>Date.now());
  if(registro)toast('⚠️ Um aviso antigo ainda pode continuar ativo.');
 }
+const schedulingIds=new Set();
 async function scheduleRemote(t){
+ const lock=String(t.id);if(schedulingIds.has(lock))return;schedulingIds.add(lock);
  try{
   if(!shouldSchedule(t))return;
+  if(!navigator.onLine){markOfflineReminder(t.id);toast('📶 Sem conexão. Avisos aguardando retorno da internet.');render();return}
   if(!('Notification'in window)||Notification.permission!=='granted'){render();return}
   let ev=dueAt(t);
   if(!ev&&t.recurrence){ev=todayAt(t.time||'08:00');if(ev<Date.now())ev.setDate(ev.getDate()+1)}
@@ -431,8 +475,9 @@ async function scheduleRemote(t){
    const latest=scheduled();latest[p.key]={sendAt:p.sendAt.toISOString(),notificationId:j.id||j.notification_id};saveScheduled(latest);
    rememberNotification('scheduled',t,p.sendAt.toISOString(),'Pedido aceito pelo servidor');
   }
-  toast('🔔 Avisos solicitados: '+reminderLabel(t));render();
- }catch(e){rememberNotification('failed',t,'','Agendamento: '+e.message);toast('Tarefa salva, mas aviso não foi agendado: '+e.message);render()}
+  clearOfflineReminder(t.id);
+  toast('🔔 Solicitações verificadas: '+reminderLabel(t));render();
+ }catch(e){rememberNotification('failed',t,'','Agendamento: '+e.message);toast('Tarefa salva, mas aviso não foi agendado: '+e.message);render()}finally{schedulingIds.delete(lock)}
 }
 async function enableNotify(){try{let O=await oneSignalReady;await O.Notifications.requestPermission();await getSub();E.notifyStatus.textContent='✅ Notificações autorizadas.';E.notifyBtn.innerHTML='🔔 Notificações<br><b>ativadas</b>';toast('Notificações ativadas.');for(const t of tasks.filter(isActive))await scheduleRemote(t)}catch(e){toast(e.message)}}async function reschedule(id){let t=tasks.find(x=>x.id==id);if(t)await scheduleRemote(t)}
 function agendarCalendario(id) {
