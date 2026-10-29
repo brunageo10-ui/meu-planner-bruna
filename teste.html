@@ -477,7 +477,7 @@ function compactReminderBadge(t){
  const label=offsets.length===2?'2 avisos':'1 aviso';
  return confirmed?'<span class="rem compactReminder">🔔 '+label+' programados</span>':'<span class="warnTag">⚠️ '+label+' · conferir</span>';
 }
-function card(t,routine=false,history=false){let pr=t.priority&&!routine&&!history&&!t.done;let meta=`<span class="tag">${esc(label(t.cat))}</span>${t.sub?`<span class="tag">${esc(t.sub)}</span>`:''}${t.date?`<span class="rem taskDate"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg> ${new Date(t.date+'T12:00').toLocaleDateString('pt-BR')}</span>`:''}${t.time?`<span class="t taskTime"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${esc(t.time)}</span>`:''}${!history?`<button type="button" class="rem quickRepeat" onclick="quickRepeat(${t.id})" aria-label="Escolher repetição">🔁 ${t.recurrence?esc(t.recurrence.label):'Repetir'}</button>`:(t.recurrence?`<span class="rem">🔁 ${esc(t.recurrence.label)}</span>`:'')}${compactReminderBadge(t)}${pr?'<span class="prioTag">⭐ Prioridade</span>':''}`;let actions=routine?`<button class="small" onclick="toggleRoutine(${t.id})">${t.paused?'▶️ Ativar rotina':'⏸ Pausar rotina'}</button><button class="small taskEdit" onclick="edit(${t.id})"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="m16 4 4 4-11 11-5 1 1-5L16 4z"/></svg> Editar</button>`:(history?`<button class="small" onclick="toggle(${t.id})">↩️ Reabrir</button>`:`<button class="small prioBtn" onclick="priority(${t.id})"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg> ${t.priority?'Prioridade ✓':'Prioridade'}</button>`)+`<button class="small taskEdit" onclick="edit(${t.id})"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="m16 4 4 4-11 11-5 1 1-5L16 4z"/></svg> Editar</button>`;return`<div class="item ${pr?'pr':''} ${t.done?'done':''}"><button class="check" onclick="toggle(${t.id})">${t.done?'✓':''}</button><div class="body"><div class="text">${esc(t.text)}</div><div class="meta">${meta}</div><details class="taskMore"><summary aria-label="Mostrar opções da atividade">Opções <span aria-hidden="true">⌄</span></summary><div class="taskActions"><div class="taskReminderDetails">${reminderTag(t)}</div>${actions}${!history&&t.time?`<button type="button" class="small" onclick="editReminder(${t.id})">🔔 Avisar: ${reminderLabel(t)}</button>`:''}${!history?`<button type="button" class="small" onclick="editChecklist(${t.id})">🎒 ${checklistItems(t).length?'Editar checklist':'Adicionar checklist'}</button>`:''}${!history&&t.date&&t.time?`<button type="button" class="small" onclick="agendarCalendario(${t.id})">📅 Outros calendários</button>`:''} ${!history&&t.date&&t.time?`<button type="button" class="small" onclick="salvarNoCalendarioPadrao(${t.id})">📅 ${esc(calendarDeviceLabel())}</button>`:''}</div></details>${checklistHTML(t)}</div><button class="del" onclick="delItem(${t.id})">×</button></div>`}
+function card(t,routine=false,history=false){let pr=t.priority&&!routine&&!history&&!t.done;let meta=`<span class="tag">${esc(label(t.cat))}</span>${t.sub?`<span class="tag">${esc(t.sub)}</span>`:''}${t.date?`<span class="rem taskDate"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg> ${new Date(t.date+'T12:00').toLocaleDateString('pt-BR')}</span>`:''}${t.time?`<span class="t taskTime"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${esc(t.time)}</span>`:''}${!history?`<button type="button" class="rem quickRepeat" onclick="quickRepeat(${t.id})" aria-label="Escolher repetição">🔁 ${t.recurrence?esc(t.recurrence.label):'Repetir'}</button>`:(t.recurrence?`<span class="rem">🔁 ${esc(t.recurrence.label)}</span>`:'')}${compactReminderBadge(t)}${pr?'<span class="prioTag">⭐ Prioridade</span>':''}`;let actions=routine?`<button class="small" onclick="toggleRoutine(${t.id})">${t.paused?'▶️ Ativar rotina':'⏸ Pausar rotina'}</button><button class="small taskEdit" onclick="edit(${t.id})"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="m16 4 4 4-11 11-5 1 1-5L16 4z"/></svg> Editar</button>`:(history?`<button class="small" onclick="toggle(${t.id})">↩️ Reabrir</button>`:`<button class="small prioBtn" onclick="priority(${t.id})"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg> ${t.priority?'Prioridade ✓':'Prioridade'}</button>`)+`<button class="small taskEdit" onclick="edit(${t.id})"><svg class="uiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="m16 4 4 4-11 11-5 1 1-5L16 4z"/></svg> Editar</button>`;return`<div class="item ${pr?'pr':''} ${t.done?'done':''}"><button class="check" onclick="toggle(${t.id})">${t.done?'✓':''}</button><div class="body"><div class="text">${esc(t.text)}</div><div class="meta">${meta}</div><details class="taskMore"><summary aria-label="Mostrar opções da atividade">Opções <span aria-hidden="true">⌄</span></summary><div class="taskActions"><div class="taskReminderDetails">${reminderTag(t)}</div>${actions}${!history&&t.time?`<button type="button" class="small" onclick="editReminder(${t.id})">🔔 Avisar: ${reminderLabel(t)}</button>`:''}${!history?`<button type="button" class="small" onclick="editChecklist(${t.id})">🎒 ${checklistItems(t).length?'Editar checklist':'Adicionar checklist'}</button>`:''}${!history&&(t.date||t.recurrence)&&t.time?`<button type="button" class="small" onclick="agendarCalendario(${t.id})">📅 Outros calendários</button>`:''} ${!history&&(t.date||t.recurrence)&&t.time?`<button type="button" class="small" onclick="salvarNoCalendarioPadrao(${t.id})">📅 ${esc(calendarDeviceLabel())}</button>`:''}</div></details>${checklistHTML(t)}</div><button class="del" onclick="delItem(${t.id})">×</button></div>`}
 function filtered(a){return a.filter(t=>active==='Tudo'||t.cat===active)}function render(){let today=dk(),activeItems=tasks.filter(isActive);E.todayCount.textContent=tasks.filter(t=>!isRoutine(t)&&!t.done&&t.date===today).length;E.schoolCount.textContent=activeItems.filter(t=>t.cat==='Compromissos').length;E.taskCount.textContent=tasks.filter(t=>!isRoutine(t)&&!t.done).length;E.routineCount.textContent=tasks.filter(t=>isRoutine(t)&&isActive(t)).length;E.routineMini.textContent=E.routineCount.textContent;E.historyMini.textContent=tasks.filter(t=>!isRoutine(t)&&t.done).length;E.filters.innerHTML=folders.map(c=>`<button class="chip ${c===active?'on':''}" data-cat="${esc(c)}">📁 ${esc(label(c))}</button>`).join('');const newFolderSelect=$('newTaskFolder');if(newFolderSelect){const selected=newFolderSelect.value;newFolderSelect.innerHTML='<option value="">Organizar automaticamente</option>'+folders.filter(f=>f!=='Tudo').map(f=>`<option value="${esc(f)}">${esc(label(f))}</option>`).join('');newFolderSelect.value=folders.includes(selected)?selected:'';}E.filters.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.cat;render()});let tl=filtered(tasks.filter(t=>!isRoutine(t)&&!t.done)).sort((a,b)=>(b.priority?1:0)-(a.priority?1:0)||String(a.date+a.time).localeCompare(String(b.date+b.time)));E.taskList.innerHTML=tl.length?tl.map(t=>card(t)).join(''):'<div class="mini"><div class="miniText">Nenhuma tarefa pontual aqui ainda 🌿</div></div>';let rl=filtered(tasks.filter(isRoutine));E.routineList.innerHTML=rl.length?rl.map(t=>card(t,true)).join(''):'<div class="mini"><div class="miniText">Nenhuma rotina aqui ainda 🔁</div></div>';let dl=filtered(tasks.filter(t=>!isRoutine(t)&&t.done));E.doneList.innerHTML=dl.length?dl.map(t=>card(t,false,true)).join(''):'<div class="mini"><div class="miniText">Nenhuma tarefa concluída ainda 🌿</div></div>';renderToday();renderSearch();lockX()}
 let addBusy=false;function addTask(ev){if(ev){ev.preventDefault();ev.stopPropagation()}if(addBusy)return false;addBusy=true;setTimeout(()=>addBusy=false,800);let text=E.input.value.trim();if(!text)return toast('Escreva ou fale alguma coisa primeiro.');let t=makeItem(text);const chosenFolder=$('newTaskFolder')?.value;if(chosenFolder&&folders.includes(chosenFolder)&&chosenFolder!=='Tudo')t.cat=chosenFolder;tasks.unshift(t);E.input.value='';saveTasks();toast('✅ Tarefa organizada em '+label(t.cat)+(t.time?' • '+t.time+' • 🔔 '+reminderLabel(t)+' (sugestão editável)':''));scheduleRemote(t);return false}
 function toggle(id){let t=tasks.find(x=>x.id==id);if(!t)return;const wasDone=t.done;t.done=!t.done;saveTasks();toast(t.done?'✅ Tarefa concluída.':'↩️ Tarefa reaberta.');if(t.done)cancelScheduled(t.id);else if(wasDone)replaceScheduled(t)}
@@ -725,13 +725,13 @@ async function scheduleRemote(t){
 }
 async function enableNotify(){try{let O=await oneSignalReady;await O.Notifications.requestPermission();await getSub();E.notifyStatus.textContent='✅ Notificações autorizadas.';E.notifyBtn.innerHTML='🔔 Notificações<br><b>ativadas</b>';toast('Notificações ativadas.');for(const t of tasks.filter(isActive))await scheduleRemote(t)}catch(e){toast(e.message)}}async function reschedule(id){let t=tasks.find(x=>x.id==id);if(t)await scheduleRemote(t)}
 function calendarDeviceLabel(){return /Android/i.test(navigator.userAgent)?'Adicionar à Google Agenda':/iPhone|iPad|iPod/i.test(navigator.userAgent)?'Salvar no Calendário do iPhone':'Adicionar ao calendário'}
-function salvarNoCalendarioPadrao(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t||!t.date||!t.time)return toast('Defina data e horário primeiro.');if(/Android/i.test(navigator.userAgent))return adicionarEventoCalendario(t,'2');if(/iPhone|iPad|iPod/i.test(navigator.userAgent))return adicionarEventoCalendario(t,'1');return adicionarEventoCalendario(t)}
-function salvarNoCalendarioIphone(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t||!t.date||!t.time)return toast('Defina data e horário primeiro.');adicionarEventoCalendario(t,'1')}
+function salvarNoCalendarioPadrao(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t||!(t.date||t.recurrence)||!t.time)return toast('Defina data e horário primeiro.');if(/Android/i.test(navigator.userAgent))return adicionarEventoCalendario(t,'2');if(/iPhone|iPad|iPod/i.test(navigator.userAgent))return adicionarEventoCalendario(t,'1');return adicionarEventoCalendario(t)}
+function salvarNoCalendarioIphone(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t||!(t.date||t.recurrence)||!t.time)return toast('Defina data e horário primeiro.');adicionarEventoCalendario(t,'1')}
 function agendarCalendario(id) {
-  const eventos = tasks.filter(t => !t.done && !t.paused && t.date && t.time);
+  const eventos = tasks.filter(t => !t.done && !t.paused && (t.date||t.recurrence) && t.time);
   if (id !== undefined) {
     const tarefa = tasks.find(t => String(t.id) === String(id));
-    if (!tarefa || !tarefa.date || !tarefa.time) {
+    if (!tarefa || !(tarefa.date||tarefa.recurrence) || !tarefa.time) {
       alert('Esta tarefa precisa ter data e horário para entrar no calendário.');
       return;
     }
@@ -750,8 +750,23 @@ function agendarCalendario(id) {
   if (!Number.isInteger(indice) || indice < 0 || indice >= Math.min(eventos.length, 20)) return;
   return adicionarEventoCalendario(eventos[indice]);
 }
+function calendarioRecorrencia(t){
+ const r=t.recurrence;if(!r)return '';
+ if(r.type==='daily')return 'FREQ=DAILY';
+ if(r.type==='weekdays')return 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR';
+ if(r.type==='weekly')return 'FREQ=WEEKLY;BYDAY='+['SU','MO','TU','WE','TH','FR','SA'][r.day??new Date().getDay()];
+ if(r.type==='monthly')return 'FREQ=MONTHLY;BYMONTHDAY='+(r.day||new Date().getDate());
+ return '';
+}
+function proximaDataCalendario(t){
+ if(t.date)return new Date(t.date+'T'+t.time+':00');
+ const d=new Date(),p=(t.time||'08:00').split(':').map(Number);
+ d.setHours(p[0],p[1],0,0);
+ for(let i=0;i<370;i++){if(d.getTime()>Date.now()&&(!t.recurrence||t.recurrence.type==='daily'||t.recurrence.type==='weekdays'&&d.getDay()>0&&d.getDay()<6||t.recurrence.type==='weekly'&&d.getDay()===t.recurrence.day||t.recurrence.type==='monthly'&&d.getDate()===t.recurrence.day))return d;d.setDate(d.getDate()+1)}
+ return d;
+}
 function adicionarEventoCalendario(t,destinoDireto) {
-  const inicio = new Date(`${t.date}T${t.time}:00`);
+  const inicio = proximaDataCalendario(t);
   if (Number.isNaN(inicio.getTime())) return alert('Data ou horário inválido.');
   const fim = new Date(inicio.getTime() + 30 * 60000);
   const formato = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -772,7 +787,7 @@ function adicionarEventoCalendario(t,destinoDireto) {
   titulo.style.cssText = 'font-size:20px;margin:0 0 8px';
   painel.appendChild(titulo);
   const descricao = document.createElement('p');
-  descricao.textContent = t.text + ' • ' + new Date(t.date+'T12:00').toLocaleDateString('pt-BR') + ' às ' + t.time;
+  descricao.textContent = t.text + ' • ' + inicio.toLocaleDateString('pt-BR') + ' às ' + t.time;
   descricao.style.cssText = 'font-size:13px;line-height:1.5;color:#786b72;margin:0 0 16px;overflow-wrap:anywhere';
   painel.appendChild(descricao);
   const avisoCalendario = document.createElement('p');
@@ -802,7 +817,8 @@ function adicionarEventoCalendario(t,destinoDireto) {
   if (destino === '2' || destino === '3') {
     const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
       + '&text=' + encodeURIComponent(t.text)
-      + '&dates=' + formato(inicio) + '%2F' + formato(fim);
+      + '&dates=' + formato(inicio) + '%2F' + formato(fim)
+      + (calendarioRecorrencia(t)?'&recur='+encodeURIComponent('RRULE:'+calendarioRecorrencia(t)):'');
     window.location.assign(url);
   }
   if (destino === '1' || destino === '3') {
@@ -813,6 +829,7 @@ function adicionarEventoCalendario(t,destinoDireto) {
       'UID:planner-' + t.id + '@teste-planner', 'DTSTAMP:' + formato(new Date()),
       'DTSTART:' + formato(inicio), 'DTEND:' + formato(fim),
       'SUMMARY:' + escapar(t.text)];
+    if(calendarioRecorrencia(t))linhas.push('RRULE:'+calendarioRecorrencia(t));
     const alarmes = [...new Set(reminderOffsets(t))];
     for (const minutos of alarmes) {
       linhas.push('BEGIN:VALARM',
