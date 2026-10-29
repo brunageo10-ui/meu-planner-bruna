@@ -506,6 +506,10 @@ function edit(id){
  const repetir=document.createElement('select');repetir.style.cssText='display:block;width:100%;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
  [['none','Não repetir'],['daily','Todos os dias'],['weekdays','Dias úteis (segunda a sexta)'],['weekly','Semanalmente'],['monthly','Mensalmente']].forEach(([value,label])=>{const opt=document.createElement('option');opt.value=value;opt.textContent=label;repetir.appendChild(opt)});
  repetir.value=t.recurrence?.type||'none';repetirLabel.appendChild(repetir);panel.appendChild(repetirLabel);
+ const horarioRepetir=document.createElement('div');horarioRepetir.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end;margin:4px 0';
+ const horarioLabel=hora.parentElement;horarioLabel.style.minWidth='0';repetirLabel.style.minWidth='0';
+ hora.style.minWidth='0';repetir.style.minWidth='0';
+ horarioRepetir.append(horarioLabel,repetirLabel);panel.appendChild(horarioRepetir);
  const dataLabel=data.parentElement;
  repetir.onchange=()=>{dataLabel.style.opacity=repetir.value==='daily'||repetir.value==='weekdays'?'0.6':'1'};
  repetir.dispatchEvent(new Event('change'));
