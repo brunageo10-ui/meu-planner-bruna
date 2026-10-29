@@ -919,29 +919,17 @@ E.calendarBtn.onclick=agendarCalendario;E.settingsBtn.onclick=()=>toast('⚙️ 
 })();
 </script>
 <script>
-/* Saudação personalizada: preferência local, separada das tarefas e finanças */
+/* Versão de testes com saudação neutra, sem nome pessoal. */
 (function(){
-  const key='testeIrmaoPlannerNomeV1';
-  const heading=document.querySelector('main#top .hello h1');
-  const settings=document.getElementById('settingsBtn');
-  if(!heading||!settings)return;
-  function getName(){try{return(localStorage.getItem(key)||'').trim()}catch(e){return ''}}
-  function showName(){heading.textContent='Olá'+(getName()?', '+getName():'')+'! 👋'}
-  function askName(){
-    const old=getName();
-    const answer=window.prompt('Como você gostaria de ser chamado(a)?',old);
-    if(answer===null)return;
-    const clean=answer.trim().replace(/\\s+/g,' ').slice(0,40);
-    try{if(clean)localStorage.setItem(key,clean);else localStorage.removeItem(key)}catch(e){}
-    showName();
-  }
-  showName();
-  settings.onclick=function(){
-    askName();
-  };
-  const profile=document.getElementById('navProfile');
-  if(profile)profile.onclick=askName;
-  if(!getName())setTimeout(askName,400);
+ const heading=document.querySelector('main#top .hello h1');
+ if(heading)heading.textContent='Olá! 👋';
+ const settings=document.getElementById('settingsBtn');
+ if(settings)settings.onclick=()=>{
+  const tools=document.querySelector('details.tools');
+  if(tools){tools.open=true;tools.scrollIntoView({behavior:'smooth',block:'start'})}
+ };
+ const profile=document.getElementById('navProfile');
+ if(profile)profile.onclick=()=>document.getElementById('googleAccountPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
 })();
 </script>
 
