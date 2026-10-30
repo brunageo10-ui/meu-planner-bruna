@@ -380,7 +380,28 @@ function parseRecurrence(text){let s=norm(text),m=s.match(/\b(?:todo\s+dia|todos
 function dateForTime(time){let d=new Date(),p=time.split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+60000)d.setDate(d.getDate()+1);return dk(d)}
 function smartReminderSuggestion(text){const s=norm(text);if(/\b(viagem|viajar|aeroporto|rodoviaria|embarque|voo|voar|onibus)\b/.test(s))return{minutes:120,why:'deslocamento'};if(/\b(consulta|medico|dentista|exame|cirurgia|reuniao|entrevista|prova|apresentacao)\b/.test(s))return{minutes:60,why:'compromisso importante'};if(/\b(remedio|medicamento|tomar|buscar|pegar|levar|tirar|comprar|pagar)\b/.test(s))return{minutes:10,why:'tarefa pontual'};return{minutes:10,why:'lembrete geral'}}
 function makeItem(text,old={}){let c=classify(text),time=parseTime(text),rec=parseRecurrence(text);if(rec&&!time)time='08:00';let date=rec?'':(parseDate(text)||(time?dateForTime(time):''));const suggestion=smartReminderSuggestion(text);return{id:old.id||Date.now(),text,cat:c.cat,sub:c.sub,date,time,recurrence:rec,paused:!!old.paused,done:!!old.done,priority:!!old.priority,checklist:Array.isArray(old.checklist)?old.checklist:[],reminderMinutes:old.reminderMinutes===undefined?suggestion.minutes:old.reminderMinutes,reminderSuggested:old.reminderMinutes===undefined&&!!time,reminderAtEvent:old.reminderAtEvent===undefined?true:!!old.reminderAtEvent,created:old.created||new Date().toISOString()}}
-function isRoutine(t){return !!t.recurrence}function isActive(t){return !t.done&&!t.paused}function dueAt(t){if(t.date||t.time){let d=t.date?new Date(t.date+'T'+(t.time||'08:00')):new Date();if(!t.date){let p=(t.time||'08:00').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d<Date.now())d.setDate(d.getDate()+1)}return d}return null}function todayAt(time){let d=new Date(),p=(time||'23:59').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);return d}function routineToday(t){let r=t.recurrence,d=new Date();if(!r)return false;if(r.type==='daily')return true;if(r.type==='weekdays')return d.getDay()>=1&&d.getDay()<=5;if(r.type==='weekly')return d.getDay()===r.day;if(r.type==='monthly')return d.getDate()===r.day;return false}
+function isRoutine(t){return !!t.recurrence}function isActive(t){return !t.done&&!t.paused}function diaDaSemanaNoTitulo(texto){
+ const m=String(texto||'').toLowerCase().match(/(?:domingo|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado)/);
+ if(!m)return null;
+ const dia=m[0].split('-')[0];
+ return {'domingo':0,'segunda':1,'terça':2,'terca':2,'quarta':3,'quinta':4,'sexta':5,'sábado':6,'sabado':6}[dia];
+}
+function dueAt(t){
+ if(!t.date&&!t.time)return null;
+ const agora=new Date();
+ const d=t.date?new Date(t.date+'T'+(t.time||'08:00')):new Date();
+ if(!t.date){
+  const p=(t.time||'08:00').split(':').map(Number);
+  d.setHours(p[0]||0,p[1]||0,0,0);
+  const r=t.recurrence;
+  for(let i=0;i<370;i++){
+   const corresponde=!r||r.type==='daily'||r.type==='weekdays'&&d.getDay()>=1&&d.getDay()<=5||r.type==='weekly'&&d.getDay()===(diaDaSemanaNoTitulo(t.text)??r.day)||r.type==='monthly'&&d.getDate()===r.day;
+   if(corresponde&&d>agora)return d;
+   d.setDate(d.getDate()+1);
+  }
+ }
+ return d;
+}function todayAt(time){let d=new Date(),p=(time||'23:59').split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);return d}function routineToday(t){let r=t.recurrence,d=new Date();if(!r)return false;if(r.type==='daily')return true;if(r.type==='weekdays')return d.getDay()>=1&&d.getDay()<=5;if(r.type==='weekly')return d.getDay()===r.day;if(r.type==='monthly')return d.getDate()===r.day;return false}
 function reminderTag(t){
  if(!t.time||t.done)return'';
  const ev=dueAt(t);if(!ev)return'';
@@ -503,7 +524,7 @@ function quickRepeat(id){
  save.onclick=()=>{
   if(selected!=='none'&&!t.time){alert('Defina um horário em Editar antes de ativar a repetição.');return}
   const ref=t.date?new Date(t.date+'T12:00'):new Date();
-  const recurrence=selected==='daily'?{type:'daily',label:'todos os dias'}:selected==='weekdays'?{type:'weekdays',label:'dias úteis'}:selected==='weekly'?{type:'weekly',day:ref.getDay(),label:'toda semana'}:selected==='monthly'?{type:'monthly',day:ref.getDate(),label:'todo dia '+ref.getDate()+' do mês'}:null;
+  const recurrence=selected==='daily'?{type:'daily',label:'todos os dias'}:selected==='weekdays'?{type:'weekdays',label:'dias úteis'}:selected==='weekly'?{type:'weekly',day:diaDaSemanaNoTitulo(t.text)??t.recurrence?.day??ref.getDay(),label:'toda semana'}:selected==='monthly'?{type:'monthly',day:ref.getDate(),label:'todo dia '+ref.getDate()+' do mês'}:null;
   if(recurrence)t.date='';else if(t.recurrence&&!t.date)t.date=dk();
   t.recurrence=recurrence;t.done=false;saveTasks();close();replaceScheduled(t);toast('✅ Repetição atualizada.');
  };
@@ -594,7 +615,7 @@ function edit(id){
   if(when&&Number.isNaN(when.getTime()))return alert('Data ou horário inválido.');
   const baseDate=data.value?new Date(data.value+'T12:00'):new Date();
   const day=baseDate.getDay(),dayOfMonth=baseDate.getDate();
-  const recurrence=repetir.value==='daily'?{type:'daily',label:'todos os dias'}:repetir.value==='weekdays'?{type:'weekdays',label:'dias úteis'}:repetir.value==='weekly'?{type:'weekly',day,label:'toda semana'}:repetir.value==='monthly'?{type:'monthly',day:dayOfMonth,label:'todo dia '+dayOfMonth+' do mês'}:null;
+  const recurrence=repetir.value==='daily'?{type:'daily',label:'todos os dias'}:repetir.value==='weekdays'?{type:'weekdays',label:'dias úteis'}:repetir.value==='weekly'?{type:'weekly',day:diaDaSemanaNoTitulo(name)??t.recurrence?.day??day,label:'toda semana'}:repetir.value==='monthly'?{type:'monthly',day:dayOfMonth,label:'todo dia '+dayOfMonth+' do mês'}:null;
   t.text=name;t.date=recurrence?'':data.value;t.time=hora.value;t.recurrence=recurrence;t.priority=checkPrioridade.checked;
   t.reminderMinutes=Number(aviso.value);t.reminderAtEvent=aviso.value!=='0'&&checkHorario.checked;
   t.reminderSuggested=false;
