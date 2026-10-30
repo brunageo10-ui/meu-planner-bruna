@@ -519,23 +519,40 @@ function edit(id){
  const panel=document.createElement('form');
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
  panel.setAttribute('aria-label','Editar compromisso');
- panel.style.cssText='width:min(100%,430px);max-height:90vh;overflow:auto;background:#fffafc;border-radius:22px;padding:20px;box-shadow:0 15px 40px #30101955;color:#461f30';
+ panel.style.cssText='width:min(100%,430px);max-height:90vh;overflow:auto;background:#fffafc;border-radius:22px;padding:20px;box-shadow:0 15px 40px #30101955;color:#461f30;font-size:18px';
  const heading=document.createElement('h2');heading.textContent='✏️ Editar compromisso';heading.style.cssText='font-size:21px;margin:0 0 16px';panel.appendChild(heading);
  function field(label,type,value){
   const wrap=document.createElement('label');wrap.style.cssText='display:block;font-weight:700;font-size:15px;margin:12px 0';
   wrap.textContent=label;
   const input=document.createElement('input');input.type=type;input.value=value||'';
-  input.style.cssText='display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
+  input.style.cssText='display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:13px;font-size:19px;min-height:58px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
   wrap.appendChild(input);panel.appendChild(wrap);return input;
  }
  const nome=field('Nome da atividade','text',t.text);
+ const horarioDoTexto=texto=>{
+  const achou=String(texto).match(/(?:^|\s)(?:às?\s*)?(\d{1,2})\s*(?:h|:|horas?)(?:\s*(\d{2}))?(?=\D|$)/i);
+  if(!achou)return '';
+  const h=Number(achou[1]),m=Number(achou[2]||0);
+  return h>=0&&h<=23&&m>=0&&m<=59?String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'):'';
+ };
  const folderLabel=document.createElement('label');folderLabel.textContent='📁 Pasta';folderLabel.style.cssText='display:block;font-weight:700;font-size:15px;margin:12px 0';
  const folderSelect=document.createElement('select');folderSelect.style.cssText='display:block;width:100%;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
  folders.filter(f=>f!=='Tudo').forEach(f=>{const option=document.createElement('option');option.value=f;option.textContent=label(f);folderSelect.appendChild(option)});
  if(!folders.includes(t.cat)){const option=document.createElement('option');option.value=t.cat;option.textContent=label(t.cat);folderSelect.appendChild(option)}
  folderSelect.value=t.cat;folderLabel.appendChild(folderSelect);panel.appendChild(folderLabel);
  const data=field('Data','date',t.date);
- const hora=field('Horário','time',t.time);
+ const hora=field('🕒 Horário do compromisso','time',t.time);
+ hora.style.fontSize='22px';hora.style.fontWeight='800';hora.style.minHeight='62px';hora.style.textAlign='center';
+ let horarioAlteradoManualmente=false;
+ hora.addEventListener('input',()=>{horarioAlteradoManualmente=true});
+ nome.addEventListener('input',()=>{
+  const identificado=horarioDoTexto(nome.value);
+  if(identificado&&!horarioAlteradoManualmente)hora.value=identificado;
+ });
+ const dicaHorario=document.createElement('div');
+ dicaHorario.textContent='Você pode escrever “Alex às 15h” no nome ou escolher o horário acima.';
+ dicaHorario.style.cssText='font-size:15px;line-height:1.5;color:#694b57;margin:0 0 12px';
+ hora.parentElement.insertAdjacentElement('afterend',dicaHorario);
  const repetirLabel=document.createElement('label');repetirLabel.textContent='🔁 Repetir';repetirLabel.style.cssText='display:block;font-weight:700;font-size:15px;margin:12px 0';
  const repetir=document.createElement('select');repetir.style.cssText='display:block;width:100%;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
  [['none','Não repetir'],['daily','Todos os dias'],['weekdays','Dias úteis (segunda a sexta)'],['weekly','Semanalmente'],['monthly','Mensalmente']].forEach(([value,label])=>{const opt=document.createElement('option');opt.value=value;opt.textContent=label;repetir.appendChild(opt)});
@@ -543,7 +560,7 @@ function edit(id){
  const horarioRepetir=document.createElement('div');horarioRepetir.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end;margin:4px 0';
  const horarioLabel=hora.parentElement;horarioLabel.style.minWidth='0';repetirLabel.style.minWidth='0';
  hora.style.minWidth='0';repetir.style.minWidth='0';
- horarioRepetir.append(horarioLabel,repetirLabel);panel.appendChild(horarioRepetir);
+ horarioRepetir.append(horarioLabel,repetirLabel);panel.appendChild(horarioRepetir);panel.appendChild(dicaHorario);
  const dataLabel=data.parentElement;
  repetir.onchange=()=>{dataLabel.style.opacity=repetir.value==='daily'||repetir.value==='weekdays'?'0.6':'1'};
  repetir.dispatchEvent(new Event('change'));
@@ -582,7 +599,7 @@ function edit(id){
   t.reminderMinutes=Number(aviso.value);t.reminderAtEvent=aviso.value!=='0'&&checkHorario.checked;
   t.reminderSuggested=false;
   const classification=classify(name);t.cat=folderSelect.value;t.sub=classification.sub;
-  saveTasks();close();toast('✅ Compromisso atualizado. Verificando os avisos…');replaceScheduled(t);
+  saveTasks();close();toast('✅ Compromisso atualizado para '+(t.time||'sem horário')+'.');replaceScheduled(t);
  };
  overlay.addEventListener('click',ev=>{if(ev.target===overlay)close()});
  overlay.appendChild(panel);document.body.appendChild(overlay);nome.focus();
