@@ -321,6 +321,11 @@ window.editItem=id=>{
  const date=field('Data','date',item.data||today());
  const cat=field('Categoria','select',item.cat||'Outros',['Casa','Alimentação','Transporte','Escola','SGS Vinho & Café','Saúde','Lazer','Recebimentos','Outros']);
  const forma=field('Forma de pagamento','select',item.forma||'Pix',['Pix','Cartão','Dinheiro','Débito','Crédito','Outro']);
+ const recurringCurrent=item.repeticaoId?repeticoes.find(r=>r.id===item.repeticaoId):null;
+ const recurringLabel=document.createElement('label');recurringLabel.className='editExpenseField';recurringLabel.style.display='flex';recurringLabel.style.alignItems='center';recurringLabel.style.gap='10px';
+ const recurringCheck=document.createElement('input');recurringCheck.type='checkbox';recurringCheck.checked=!!(recurringCurrent&&recurringCurrent.ativo);recurringCheck.style.width='23px';recurringCheck.style.height='23px';recurringCheck.style.flex='none';
+ recurringLabel.append(recurringCheck,document.createTextNode('🔁 Repetir todos os meses (mesmo valor)'));form.appendChild(recurringLabel);
+ const recurringNote=document.createElement('p');recurringNote.textContent='A partir da data deste gasto, os próximos meses terão o mesmo valor. Desmarque para interromper.';form.appendChild(recurringNote);
  const buttons=document.createElement('div');buttons.className='editExpenseActions';
  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.onclick=()=>overlay.remove();
  const saveBtn=document.createElement('button');saveBtn.type='submit';saveBtn.textContent='Salvar alterações';
@@ -332,6 +337,18 @@ window.editItem=id=>{
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date.value)){date.focus();return toast('Escolha uma data válida.')}
   item.tipo=type.value==='Entrada'?'entrada':'saida';
   item.valor=amount;item.desc=desc.value.trim().slice(0,200);item.data=date.value;item.cat=cat.value;item.forma=forma.value;
+  const previousId=item.repeticaoId;
+  if(recurringCheck.checked&&item.tipo!=='saida'){toast('A repetição mensal é apenas para gastos.');return}
+  if(recurringCheck.checked){
+   const ym=item.data.slice(0,7),dia=Number(item.data.slice(8,10));
+   let rep=previousId?repeticoes.find(r=>r.id===previousId):null;
+   if(!rep){const id='mensal-'+Date.now()+'-'+Math.floor(Math.random()*100000);rep={id,ativo:true};repeticoes.push(rep);item.repeticaoId=id;item.repeticaoMes=ym}
+   rep.valor=amount;rep.desc=item.desc;rep.cat=item.cat;rep.forma=item.forma;rep.dia=dia;rep.ativo=true;
+   if(!rep.ultimo||rep.ultimo<ym)rep.ultimo=ym;
+   saveRepeticoes();
+  }else if(previousId){
+   const rep=repeticoes.find(r=>r.id===previousId);if(rep){rep.ativo=false;saveRepeticoes()}
+  }
   save();render();overlay.remove();toast('✅ Lançamento atualizado.');
  };
  overlay.appendChild(form);overlay.addEventListener('click',ev=>{if(ev.target===overlay)overlay.remove()});
