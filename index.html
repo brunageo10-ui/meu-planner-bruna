@@ -380,7 +380,7 @@ function parseTime(text){let s=norm(text),m=s.match(/\b(?:as?\s*)?([01]?\d|2[0-3
 function parseRecurrence(text){let s=norm(text),m=s.match(/\b(?:todo\s+dia|todos\s+os\s+dias|diariamente)\b/);if(m&&!/todo\s+dia\s+\d/.test(s))return{type:'daily',label:'todos os dias'};m=s.match(/\b(?:todo\s+dia|dia)\s+(\d{1,2})\s+(?:de\s+)?(?:todo\s+mes|todos\s+os\s+meses|mensal)\b/);if(m)return{type:'monthly',day:Number(m[1]),label:'todo dia '+Number(m[1])+' do mês'};m=s.match(/\b(?:todo|toda|todos\s+os|todas\s+as)\s+(domingo|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado)s?\b/);if(m)return{type:'weekly',day:DAYS[m[1]],label:'toda semana'};return null}
 function dateForTime(time){let d=new Date(),p=time.split(':').map(Number);d.setHours(p[0]||0,p[1]||0,0,0);if(d.getTime()<=Date.now()+60000)d.setDate(d.getDate()+1);return dk(d)}
 function smartReminderSuggestion(text){const s=norm(text);if(/\b(viagem|viajar|aeroporto|rodoviaria|embarque|voo|voar|onibus)\b/.test(s))return{minutes:120,why:'deslocamento'};if(/\b(consulta|medico|dentista|exame|cirurgia|reuniao|entrevista|prova|apresentacao)\b/.test(s))return{minutes:60,why:'compromisso importante'};if(/\b(remedio|medicamento|tomar|buscar|pegar|levar|tirar|comprar|pagar)\b/.test(s))return{minutes:10,why:'tarefa pontual'};return{minutes:10,why:'lembrete geral'}}
-function makeItem(text,old={}){let c=classify(text),time=parseTime(text),rec=parseRecurrence(text);if(rec&&!time)time='08:00';let date=rec?'':(parseDate(text)||(time?dateForTime(time):''));const suggestion=smartReminderSuggestion(text);return{id:old.id||Date.now(),text,cat:c.cat,sub:c.sub,date,time,recurrence:rec,paused:!!old.paused,done:!!old.done,priority:!!old.priority,checklist:Array.isArray(old.checklist)?old.checklist:[],reminderMinutes:old.reminderMinutes===undefined?suggestion.minutes:old.reminderMinutes,reminderSuggested:old.reminderMinutes===undefined&&!!time,reminderAtEvent:old.reminderAtEvent===undefined?true:!!old.reminderAtEvent,created:old.created||new Date().toISOString()}}
+function makeItem(text,old={}){let c=classify(text),time=parseTime(text),rec=parseRecurrence(text);if(rec&&!time)time='08:00';let date=rec?'':(parseDate(text)||(time?dateForTime(time):''));const suggestion=smartReminderSuggestion(text);return{id:old.id||Date.now(),text,cat:c.cat,sub:c.sub,date,time,recurrence:rec,paused:!!old.paused,done:!!old.done,priority:!!old.priority,checklist:Array.isArray(old.checklist)?old.checklist:[],reminderMinutes:old.reminderMinutes===undefined?suggestion.minutes:old.reminderMinutes,reminderSuggested:old.reminderMinutes===undefined&&!!time,reminderAtEvent:old.reminderAtEvent===undefined?true:!!old.reminderAtEvent,prepareMinutes:Number(old.prepareMinutes)||0,leaveMinutes:Number(old.leaveMinutes)||0,created:old.created||new Date().toISOString()}}
 function isRoutine(t){return !!t.recurrence}function isActive(t){return !t.done&&!t.paused}function diaDaSemanaNoTitulo(texto){
  const m=String(texto||'').toLowerCase().match(/(?:domingo|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado)/);
  if(!m)return null;
@@ -444,7 +444,7 @@ function renderMyDay(){
 function renderToday(){renderMyDay();renderChecklistSpotlight();E.todayLabel.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});let today=dk(),items=[];tasks.filter(isActive).forEach(t=>{if(isRoutine(t)){if(routineToday(t))items.push({id:t.id,text:t.text,time:t.time||'08:00',cat:t.cat,routine:true,stamp:todayAt(t.time||'08:00').getTime()});return}let ev=dueAt(t);if(t.date===today||(ev&&dk(ev)===today))items.push({id:t.id,text:t.text,time:t.time||'Hoje',cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()})});items=items.sort((a,b)=>a.stamp-b.stamp);E.todayList.innerHTML=items.length?items.map(x=>`<div class="mini"><span class="timeMini">${esc(x.time)}</span><div class="miniMain"><div class="miniText">${esc(x.text)}</div><div class="miniCat">${x.routine?'Rotina • ':''}${esc(label(x.cat))}</div></div></div>`).join(''):'<div class="mini"><div class="miniText">Nada marcado para hoje. Ótimo respiro 🌿</div></div>'}
 function reminderMinutes(t){return [0,5,10,15,30,60,120,1440].includes(Number(t.reminderMinutes))?Number(t.reminderMinutes):60}
 function reminderOffsets(t){const n=reminderMinutes(t);return t.reminderAtEvent!==false&&n!==0?[n,0]:[n]}
-function reminderKeys(t){return reminderOffsets(t).map(n=>n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id))}
+function reminderKeys(t){return reminderOffsets(t).map(n=>n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id)).concat(Number(t.prepareMinutes)>0?[String(t.id)+':prepare']:[],Number(t.leaveMinutes)>0?[String(t.id)+':leave']:[])}
 function reminderLabel(t){const n=reminderMinutes(t);const s=n===0?'No horário':n===1440?'1 dia antes':n===60?'1 hora antes':n===120?'2 horas antes':n+' minutos antes';return s+(t.reminderAtEvent!==false&&n!==0?' + no horário':'')}
 function editReminder(id){
  const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;
@@ -470,6 +470,9 @@ function editChecklist(id){
  const title=document.createElement('h2');title.textContent='🎒 Checklist';panel.appendChild(title);
  const hint=document.createElement('p');hint.textContent='Adicione um item por linha para '+t.text+'. Use a tecla Enter para passar à próxima linha.';panel.appendChild(hint);
  const area=document.createElement('textarea');area.className='checklistEditorArea';area.rows=7;area.placeholder='Documento\nExames\nCarregador\nÓculos';area.value=checklistItems(t).map(x=>x.text).join('\n');area.setAttribute('aria-label','Itens do checklist, um por linha');panel.appendChild(area);
+ const essentials=document.createElement('button');essentials.type='button';essentials.textContent='✨ Adicionar lista essencial (chaves, celular, documentos...)';essentials.className='checklistEditorSave';essentials.style.cssText='display:block;width:100%;margin:10px 0;background:#f4dae4;color:#8a1238;text-align:left';
+ essentials.onclick=()=>{const names=area.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const lower=new Set(names.map(x=>x.toLocaleLowerCase('pt-BR')));['Chaves','Celular','Documentos','Óculos','Carteira','Água'].forEach(x=>{if(!lower.has(x.toLocaleLowerCase('pt-BR')))names.push(x)});area.value=names.join('\n');toast('🎒 Itens essenciais adicionados. Confira e salve.')};
+ panel.appendChild(essentials);
  const footer=document.createElement('div');footer.className='checklistEditorFooter';
  const close=()=>overlay.remove();
  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.className='checklistEditorCancel';cancel.onclick=close;
@@ -596,6 +599,15 @@ function edit(id){
  const noHorario=document.createElement('label');noHorario.style.cssText='display:flex;gap:10px;align-items:center;font-weight:700;margin:15px 0';
  const checkHorario=document.createElement('input');checkHorario.type='checkbox';checkHorario.checked=t.reminderAtEvent!==false;checkHorario.style.cssText='width:22px;height:22px;flex:none';noHorario.appendChild(checkHorario);
  noHorario.appendChild(document.createTextNode('Também avisar no horário do compromisso'));panel.appendChild(noHorario);
+ const prepInfo=document.createElement('p');prepInfo.textContent='🧠 Apoio ao TDAH: escolha avisos extras para se organizar antes do compromisso. Deixe “Desativado” se não precisar.';prepInfo.style.cssText='margin:14px 0 6px;font-size:15px;line-height:1.5;color:#694b57';panel.appendChild(prepInfo);
+ function preparationSelect(caption,value,choices){
+  const wrapper=document.createElement('label');wrapper.textContent=caption;wrapper.style.cssText='display:block;font-size:15px;font-weight:750;margin:12px 0';
+  const selector=document.createElement('select');selector.style.cssText='display:block;width:100%;padding:13px;font-size:16px;margin-top:7px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
+  choices.forEach(([minutes,text])=>{const option=document.createElement('option');option.value=minutes;option.textContent=text;selector.appendChild(option)});
+  selector.value=String(value||0);wrapper.appendChild(selector);panel.appendChild(wrapper);return selector;
+ }
+ const preparacao=preparationSelect('🧠 Começar a me preparar',t.prepareMinutes,[[0,'Desativado'],[30,'30 minutos antes'],[60,'1 hora antes'],[120,'2 horas antes'],[180,'3 horas antes']]);
+ const saida=preparationSelect('🎒 Hora de sair e conferir a lista',t.leaveMinutes,[[0,'Desativado'],[10,'10 minutos antes'],[15,'15 minutos antes'],[30,'30 minutos antes'],[60,'1 hora antes']]);
  const prioridade=document.createElement('label');prioridade.style.cssText='display:flex;gap:10px;align-items:center;font-weight:700;margin:15px 0';
  const checkPrioridade=document.createElement('input');checkPrioridade.type='checkbox';checkPrioridade.checked=!!t.priority;checkPrioridade.style.cssText='width:22px;height:22px;flex:none';prioridade.appendChild(checkPrioridade);
  prioridade.appendChild(document.createTextNode('⭐ Compromisso prioritário'));panel.appendChild(prioridade);
@@ -619,7 +631,7 @@ function edit(id){
   const recurrence=repetir.value==='daily'?{type:'daily',label:'todos os dias'}:repetir.value==='weekdays'?{type:'weekdays',label:'dias úteis'}:repetir.value==='weekly'?{type:'weekly',day:diaDaSemanaNoTitulo(name)??t.recurrence?.day??day,label:'toda semana'}:repetir.value==='monthly'?{type:'monthly',day:dayOfMonth,label:'todo dia '+dayOfMonth+' do mês'}:null;
   t.text=name;t.date=recurrence?'':data.value;t.time=hora.value;t.recurrence=recurrence;t.priority=checkPrioridade.checked;
   t.reminderMinutes=Number(aviso.value);t.reminderAtEvent=aviso.value!=='0'&&checkHorario.checked;
-  t.reminderSuggested=false;
+  t.reminderSuggested=false;t.prepareMinutes=Number(preparacao.value)||0;t.leaveMinutes=Number(saida.value)||0;
   const classification=classify(name);t.cat=folderSelect.value;t.sub=classification.sub;
   saveTasks();close();toast('✅ Compromisso atualizado para '+(t.time||'sem horário')+'.');replaceScheduled(t);
  };
@@ -710,7 +722,7 @@ async function cancelScheduledKey(id,key){
 }
 async function cancelScheduled(id){
  if(!navigator.onLine){markOfflineReminder(id);toast('📶 Sem conexão. Cancelamento pendente.');return false}
- const keys=Object.keys(scheduled()).filter(k=>k===String(id)||k===String(id)+':event');
+ const keys=Object.keys(scheduled()).filter(k=>k===String(id)||k.startsWith(String(id)+':')&&['event','prepare','leave'].includes(k.slice(String(id).length+1)));
  let ok=true;
  for(const key of keys)if(!await cancelScheduledKey(id,key))ok=false;
  if(ok)clearOfflineReminder(id);
@@ -735,17 +747,20 @@ async function scheduleRemote(t){
   if(!ev&&t.recurrence){ev=todayAt(t.time||'08:00');if(ev<Date.now())ev.setDate(ev.getDate()+1)}
   if(!ev)return;
   const offsets=reminderOffsets(t);
-  const planned=offsets.map(n=>({n,key:n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id),sendAt:new Date(ev.getTime()-n*60000)}));
+  const planned=offsets.map(n=>({n,key:n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id),sendAt:new Date(ev.getTime()-n*60000),kind:'normal'}));
+  if(Number(t.prepareMinutes)>0)planned.push({n:Number(t.prepareMinutes),key:String(t.id)+':prepare',sendAt:new Date(ev.getTime()-Number(t.prepareMinutes)*60000),kind:'prepare'});
+  if(Number(t.leaveMinutes)>0)planned.push({n:Number(t.leaveMinutes),key:String(t.id)+':leave',sendAt:new Date(ev.getTime()-Number(t.leaveMinutes)*60000),kind:'leave'});
+  const seenTimes=new Set();const uniquePlanned=planned.filter(p=>{const when=p.sendAt.toISOString();if(seenTimes.has(when))return false;seenTimes.add(when);return true});
   const current=scheduled();
-  const stale=Object.keys(current).filter(k=>(k===String(t.id)||k===String(t.id)+':event')&&!planned.some(p=>p.key===k&&current[k].sendAt===p.sendAt.toISOString()));
+  const stale=Object.keys(current).filter(k=>(k===String(t.id)||k.startsWith(String(t.id)+':')&&['event','prepare','leave'].includes(k.slice(String(t.id).length+1)))&&!uniquePlanned.some(p=>p.key===k&&current[k].sendAt===p.sendAt.toISOString()));
   for(const key of stale)if(!await cancelScheduledKey(t.id,key))return;
-  for(const p of planned){
+  for(const p of uniquePlanned){
    if(p.sendAt.getTime()<Date.now()+90000)continue;
    const s=scheduled();
    if(s[p.key]&&s[p.key].sendAt===p.sendAt.toISOString())continue;
    if(s[p.key]){toast('⚠️ Aviso anterior ainda ativo. Não criei duplicidade.');continue}
    const sub=await getSub();
-   const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:notificationMessage(t,ev),sendAfter:p.sendAt.toISOString()})});
+   const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:(p.kind==='prepare'?'🧠 Hora de se preparar! '+notificationMessage(t,ev):p.kind==='leave'?'🎒 Hora de sair! '+notificationMessage(t,ev):notificationMessage(t,ev)),sendAfter:p.sendAt.toISOString()})});
    let j={};try{j=await r.json()}catch(e){}
    if(!r.ok||j.errors?.length||!j.id&&!j.notification_id)throw Error('servidor não confirmou o identificador do aviso');
    const latest=scheduled();latest[p.key]={sendAt:p.sendAt.toISOString(),notificationId:j.id||j.notification_id};saveScheduled(latest);
