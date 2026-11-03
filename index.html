@@ -444,7 +444,7 @@ function renderMyDay(){
 function renderToday(){renderMyDay();renderChecklistSpotlight();E.todayLabel.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});let today=dk(),items=[];tasks.filter(isActive).forEach(t=>{if(isRoutine(t)){if(routineToday(t))items.push({id:t.id,text:t.text,time:t.time||'08:00',cat:t.cat,routine:true,stamp:todayAt(t.time||'08:00').getTime()});return}let ev=dueAt(t);if(t.date===today||(ev&&dk(ev)===today))items.push({id:t.id,text:t.text,time:t.time||'Hoje',cat:t.cat,routine:false,stamp:ev?ev.getTime():todayAt('23:59').getTime()})});items=items.sort((a,b)=>a.stamp-b.stamp);E.todayList.innerHTML=items.length?items.map(x=>`<div class="mini"><span class="timeMini">${esc(x.time)}</span><div class="miniMain"><div class="miniText">${esc(x.text)}</div><div class="miniCat">${x.routine?'Rotina • ':''}${esc(label(x.cat))}</div></div></div>`).join(''):'<div class="mini"><div class="miniText">Nada marcado para hoje. Ótimo respiro 🌿</div></div>'}
 function reminderMinutes(t){return [0,5,10,15,30,60,120,1440].includes(Number(t.reminderMinutes))?Number(t.reminderMinutes):60}
 function reminderOffsets(t){const n=reminderMinutes(t);return t.reminderAtEvent!==false&&n!==0?[n,0]:[n]}
-function reminderKeys(t){return reminderOffsets(t).map(n=>n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id)).concat(Number(t.prepareMinutes)>0?[String(t.id)+':prepare']:[],Number(t.leaveMinutes)>0?[String(t.id)+':leave']:[])}
+function reminderKeys(t){return reminderOffsets(t).map(n=>n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id))}
 function reminderLabel(t){const n=reminderMinutes(t);const s=n===0?'No horário':n===1440?'1 dia antes':n===60?'1 hora antes':n===120?'2 horas antes':n+' minutos antes';return s+(t.reminderAtEvent!==false&&n!==0?' + no horário':'')}
 function editReminder(id){
  const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;
@@ -470,9 +470,6 @@ function editChecklist(id){
  const title=document.createElement('h2');title.textContent='🎒 Checklist';panel.appendChild(title);
  const hint=document.createElement('p');hint.textContent='Adicione um item por linha para '+t.text+'. Use a tecla Enter para passar à próxima linha.';panel.appendChild(hint);
  const area=document.createElement('textarea');area.className='checklistEditorArea';area.rows=7;area.placeholder='Documento\nExames\nCarregador\nÓculos';area.value=checklistItems(t).map(x=>x.text).join('\n');area.setAttribute('aria-label','Itens do checklist, um por linha');panel.appendChild(area);
- const essentials=document.createElement('button');essentials.type='button';essentials.textContent='✨ Adicionar lista essencial (chaves, celular, documentos...)';essentials.className='checklistEditorSave';essentials.style.cssText='display:block;width:100%;margin:10px 0;background:#f4dae4;color:#8a1238;text-align:left';
- essentials.onclick=()=>{const names=area.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const lower=new Set(names.map(x=>x.toLocaleLowerCase('pt-BR')));['Chaves','Celular','Documentos','Óculos','Carteira','Água'].forEach(x=>{if(!lower.has(x.toLocaleLowerCase('pt-BR')))names.push(x)});area.value=names.join('\n');toast('🎒 Itens essenciais adicionados. Confira e salve.')};
- panel.appendChild(essentials);
  const footer=document.createElement('div');footer.className='checklistEditorFooter';
  const close=()=>overlay.remove();
  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.className='checklistEditorCancel';cancel.onclick=close;
@@ -597,15 +594,6 @@ function edit(id){
  const noHorario=document.createElement('label');noHorario.style.cssText='display:flex;gap:10px;align-items:center;font-weight:700;margin:15px 0';
  const checkHorario=document.createElement('input');checkHorario.type='checkbox';checkHorario.checked=t.reminderAtEvent!==false;checkHorario.style.cssText='width:22px;height:22px;flex:none';noHorario.appendChild(checkHorario);
  noHorario.appendChild(document.createTextNode('Também avisar no horário do compromisso'));panel.appendChild(noHorario);
- const prepInfo=document.createElement('p');prepInfo.textContent='🧠 Apoio ao TDAH: escolha avisos extras para se organizar antes do compromisso. Deixe “Desativado” se não precisar.';prepInfo.style.cssText='margin:14px 0 6px;font-size:15px;line-height:1.5;color:#694b57';panel.appendChild(prepInfo);
- function preparationSelect(caption,value,choices){
-  const wrapper=document.createElement('label');wrapper.textContent=caption;wrapper.style.cssText='display:block;font-size:15px;font-weight:750;margin:12px 0';
-  const selector=document.createElement('select');selector.style.cssText='display:block;width:100%;padding:13px;font-size:16px;margin-top:7px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
-  choices.forEach(([minutes,text])=>{const option=document.createElement('option');option.value=minutes;option.textContent=text;selector.appendChild(option)});
-  selector.value=String(value||0);wrapper.appendChild(selector);panel.appendChild(wrapper);return selector;
- }
- const preparacao=preparationSelect('🧠 Começar a me preparar',t.prepareMinutes,[[0,'Desativado'],[30,'30 minutos antes'],[60,'1 hora antes'],[120,'2 horas antes'],[180,'3 horas antes']]);
- const saida=preparationSelect('🎒 Hora de sair e conferir a lista',t.leaveMinutes,[[0,'Desativado'],[10,'10 minutos antes'],[15,'15 minutos antes'],[30,'30 minutos antes'],[60,'1 hora antes']]);
  const prioridade=document.createElement('label');prioridade.style.cssText='display:flex;gap:10px;align-items:center;font-weight:700;margin:15px 0';
  const checkPrioridade=document.createElement('input');checkPrioridade.type='checkbox';checkPrioridade.checked=!!t.priority;checkPrioridade.style.cssText='width:22px;height:22px;flex:none';prioridade.appendChild(checkPrioridade);
  prioridade.appendChild(document.createTextNode('⭐ Compromisso prioritário'));panel.appendChild(prioridade);
@@ -629,7 +617,7 @@ function edit(id){
   const recurrence=repetir.value==='daily'?{type:'daily',label:'todos os dias'}:repetir.value==='weekdays'?{type:'weekdays',label:'dias úteis'}:repetir.value==='weekly'?{type:'weekly',day:diaDaSemanaNoTitulo(name)??t.recurrence?.day??day,label:'toda semana'}:repetir.value==='monthly'?{type:'monthly',day:dayOfMonth,label:'todo dia '+dayOfMonth+' do mês'}:null;
   t.text=name;t.date=recurrence?'':data.value;t.time=hora.value;t.recurrence=recurrence;t.priority=checkPrioridade.checked;
   t.reminderMinutes=Number(aviso.value);t.reminderAtEvent=aviso.value!=='0'&&checkHorario.checked;
-  t.reminderSuggested=false;t.prepareMinutes=Number(preparacao.value)||0;t.leaveMinutes=Number(saida.value)||0;
+  t.reminderSuggested=false;
   const classification=classify(name);t.cat=folderSelect.value;t.sub=classification.sub;
   saveTasks();close();toast('✅ Compromisso atualizado para '+(t.time||'sem horário')+'.');replaceScheduled(t);
  };
@@ -726,6 +714,7 @@ async function cancelScheduled(id){
  if(ok)clearOfflineReminder(id);
  return ok;
 }
+window.addEventListener('load',()=>{if(!navigator.onLine)return;setTimeout(async()=>{const entries=Object.keys(scheduled()).filter(k=>/:prepare$|:leave$/.test(k));for(const key of entries){const id=key.replace(/:(prepare|leave)$/,'');await cancelScheduledKey(id,key)}},1500)});
 async function replaceScheduled(t){
  if(!await cancelScheduled(t.id))return;
  if(!t.done&&!t.paused)await scheduleRemote(t);
@@ -746,8 +735,6 @@ async function scheduleRemote(t){
   if(!ev)return;
   const offsets=reminderOffsets(t);
   const planned=offsets.map(n=>({n,key:n===0&&reminderMinutes(t)!==0?String(t.id)+':event':String(t.id),sendAt:new Date(ev.getTime()-n*60000),kind:'normal'}));
-  if(Number(t.prepareMinutes)>0)planned.push({n:Number(t.prepareMinutes),key:String(t.id)+':prepare',sendAt:new Date(ev.getTime()-Number(t.prepareMinutes)*60000),kind:'prepare'});
-  if(Number(t.leaveMinutes)>0)planned.push({n:Number(t.leaveMinutes),key:String(t.id)+':leave',sendAt:new Date(ev.getTime()-Number(t.leaveMinutes)*60000),kind:'leave'});
   const seenTimes=new Set();const uniquePlanned=planned.filter(p=>{const when=p.sendAt.toISOString();if(seenTimes.has(when))return false;seenTimes.add(when);return true});
   const current=scheduled();
   const stale=Object.keys(current).filter(k=>(k===String(t.id)||k.startsWith(String(t.id)+':')&&['event','prepare','leave'].includes(k.slice(String(t.id).length+1)))&&!uniquePlanned.some(p=>p.key===k&&current[k].sendAt===p.sendAt.toISOString()));
