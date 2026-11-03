@@ -544,7 +544,7 @@ function edit(id){
  const panel=document.createElement('form');
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
  panel.setAttribute('aria-label','Editar compromisso');
- panel.style.cssText='width:min(100%,430px);max-height:90vh;overflow:auto;background:#fffafc;border-radius:22px;padding:20px;box-shadow:0 15px 40px #30101955;color:#461f30;font-size:18px';
+ panel.style.cssText='width:min(100%,430px);box-sizing:border-box;max-height:calc(100dvh - 32px);overflow-y:auto;overflow-x:hidden;background:#fffafc;border-radius:22px;padding:18px;box-shadow:0 15px 40px #30101955;color:#461f30;font-size:17px';
  const heading=document.createElement('h2');heading.textContent='✏️ Editar compromisso';heading.style.cssText='font-size:21px;margin:0 0 16px';panel.appendChild(heading);
  function field(label,type,value){
   const wrap=document.createElement('label');wrap.style.cssText='display:block;font-weight:700;font-size:15px;margin:12px 0';
@@ -582,10 +582,8 @@ function edit(id){
  const repetir=document.createElement('select');repetir.style.cssText='display:block;width:100%;margin-top:7px;padding:13px;font-size:16px;border:1px solid #dcb8c5;border-radius:12px;background:white;color:#401c2a';
  [['none','Não repetir'],['daily','Todos os dias'],['weekdays','Dias úteis (segunda a sexta)'],['weekly','Semanalmente'],['monthly','Mensalmente']].forEach(([value,label])=>{const opt=document.createElement('option');opt.value=value;opt.textContent=label;repetir.appendChild(opt)});
  repetir.value=t.recurrence?.type||'none';repetirLabel.appendChild(repetir);panel.appendChild(repetirLabel);
- const horarioRepetir=document.createElement('div');horarioRepetir.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end;margin:4px 0';
- const horarioLabel=hora.parentElement;horarioLabel.style.minWidth='0';repetirLabel.style.minWidth='0';
- hora.style.minWidth='0';repetir.style.minWidth='0';
- horarioRepetir.append(horarioLabel,repetirLabel);panel.appendChild(horarioRepetir);panel.appendChild(dicaHorario);
+ // Campos em linhas separadas para leitura confortável no iPhone.
+ hora.style.boxSizing='border-box';repetir.style.boxSizing='border-box';
  const dataLabel=data.parentElement;
  repetir.onchange=()=>{dataLabel.style.opacity=repetir.value==='daily'||repetir.value==='weekdays'?'0.6':'1'};
  repetir.dispatchEvent(new Event('change'));
