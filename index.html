@@ -996,7 +996,7 @@ try{
  }
 
  let selectedAutoBackup=null,selectedAutoUid=null;
- const backupAllowedKeys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastos'];
+ const backupAllowedKeys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastosFechamentosMensais','brunaGastos'];
  const restoreDataKeys=backupAllowedKeys.filter(k=>k!=='brunaScheduled');
  function validateAutoCopy(record){
   const data=record?.data;
@@ -1007,6 +1007,7 @@ try{
    if(data.brunaTasks&&!Array.isArray(JSON.parse(data.brunaTasks)))return false;
    if(data.brunaShoppingV1&&!Array.isArray(JSON.parse(data.brunaShoppingV1)))return false;
    if(data.brunaGastosLancamentos&&!Array.isArray(JSON.parse(data.brunaGastosLancamentos)))return false;
+   if(data.brunaGastosFechamentosMensais&&!Array.isArray(JSON.parse(data.brunaGastosFechamentosMensais)))return false;
   }catch(e){return false}
   return true;
  }
@@ -1066,7 +1067,7 @@ try{
   }
  };
 
- const backupKeys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastos'];
+ const backupKeys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastosFechamentosMensais','brunaGastos'];
  const autoEnabledKey='brunaCloudAutoBackupEnabledV1',autoDeviceKey='brunaCloudAutoBackupDeviceV1';
  let autoRunning=false,lastAutoPayload='',lastAutoAttempt=0;
  function localSnapshot(){const data={};for(const key of backupKeys){const value=localStorage.getItem(key);if(value!==null)data[key]=value}return data}
@@ -1129,7 +1130,7 @@ try{
  backupBtn.onclick=async()=>{
  const user=auth.currentUser;
  if(!user){backupStatus.textContent='Entre com sua conta Google primeiro.';return}
- const keys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastos'];
+ const keys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastosFechamentosMensais','brunaGastos'];
  const data={};for(const key of keys){const value=localStorage.getItem(key);if(value!==null)data[key]=value}
  if(!Object.keys(data).length){backupStatus.textContent='Nenhum dado local encontrado neste navegador. Nada foi enviado.';return}
  // Uma conta Google diferente nunca deve substituir a cópia de outra pessoa.
@@ -1156,7 +1157,7 @@ checkBtn.onclick=async()=>{
   const snap=await getDoc(doc(db,'users',user.uid,'backups','manual'));
   if(!snap.exists()){backupStatus.textContent='Ainda não há backup na nuvem para esta conta.';return}
   const record=snap.data(),data=record.data;
-  const allowed=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastos'];
+  const allowed=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastosFechamentosMensais','brunaGastos'];
   if(!data||typeof data!=='object'||!Object.keys(data).length||Object.keys(data).some(k=>!allowed.includes(k)||typeof data[k]!=='string'))throw Error('Formato de backup não reconhecido');
   const stamp=record.updatedAt?.toDate?.();const when=stamp?stamp.toLocaleString('pt-BR'):'data não informada';
   const tasks=JSON.parse(data.brunaTasks||'[]'),shopping=JSON.parse(data.brunaShoppingV1||'[]');
