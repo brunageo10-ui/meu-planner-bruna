@@ -407,5 +407,13 @@ function recolherResumoAoAbrir(){
 recolherResumoAoAbrir();
 window.addEventListener('pageshow',recolherResumoAoAbrir);
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./OneSignalSDKWorker.js', {scope: './'})
+      .catch(() => { /* Uso online continua disponível sem cache offline. */ });
+  });
+}
+</script>
 </body>
 </html>
