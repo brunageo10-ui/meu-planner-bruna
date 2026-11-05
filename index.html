@@ -1182,6 +1182,7 @@ try{
  function switchLocalProfile(user){
   const previous=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
   if(!previous||!user||previous===user.uid)return;
+  if(Object.keys(JSON.parse(localStorage.getItem('brunaScheduled')||'{}')).length){alert('Há lembretes ativos nesta instalação. A troca de conta está bloqueada nesta versão de teste para evitar que notificações da conta anterior apareçam para outra pessoa.');return}
   if(!confirm('Trocar para a conta '+(user.email||'Google')+'? Os dados atuais serão guardados em um perfil local separado. A nova conta começará vazia se ainda não tiver dados neste aparelho. Nenhum backup na nuvem será apagado.'))return;
   const oldData=localProfileSnapshot(),oldOwner=previous;
   const existing=localStorage.getItem(profilePrefix+user.uid);
