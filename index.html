@@ -1216,4 +1216,12 @@ document.getElementById('homeQuickNew')?.addEventListener('click',()=>{document.
 document.getElementById('homeQuickAgenda')?.addEventListener('click',()=>document.getElementById('homeAgendaSection')?.scrollIntoView({behavior:'smooth',block:'start'}));
 document.getElementById('homeQuickShop')?.addEventListener('click',()=>document.getElementById('shopLaunch')?.click());
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./OneSignalSDKWorker.js', {scope: './'})
+      .catch(() => { /* Uso online continua disponível sem cache offline. */ });
+  });
+}
+</script>
 </body></html>
