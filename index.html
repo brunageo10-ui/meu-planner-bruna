@@ -1,6 +1,23 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script>
+/* Recupera a conta anterior se o navegador fechar durante uma troca de perfil. */
+(function(){
+ try{
+  const raw=localStorage.getItem('brunaAccountSwapPendingV1');
+  if(!raw)return;
+  const pending=JSON.parse(raw);
+  const keys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastosFechamentosMensais','brunaGastos','brunaNotificationHistory','brunaOfflineReminderIds','brunaCloudAutoBackupEnabledV1','brunaCloudAutoBackupDeviceV1'];
+  if(!pending||typeof pending.owner!=='string'||!pending.data||typeof pending.data!=='object')return;
+  for(const key of keys)localStorage.removeItem(key);
+  for(const key of keys)if(typeof pending.data[key]==='string')localStorage.setItem(key,pending.data[key]);
+  localStorage.setItem('brunaPlannerCloudOwnerUidV1',pending.owner);
+  localStorage.setItem('brunaAccountSessionStatusV1','locked');
+  localStorage.removeItem('brunaAccountSwapPendingV1');
+ }catch(e){}
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#8a1238">
@@ -1177,10 +1194,12 @@ try{
    // Arquiva primeiro; se o armazenamento estiver cheio, nada é removido.
    localStorage.setItem(profilePrefix+oldOwner,JSON.stringify(oldData));
    if(localStorage.getItem(profilePrefix+oldOwner)!==JSON.stringify(oldData))throw Error('Não foi possível conferir a cópia local');
+   localStorage.setItem('brunaAccountSwapPendingV1',JSON.stringify({owner:oldOwner,data:oldData}));
    for(const key of profileDataKeys)localStorage.removeItem(key);
    for(const [key,value] of Object.entries(nextData))localStorage.setItem(key,value);
    localStorage.setItem('brunaPlannerCloudOwnerUidV1',user.uid);
    localStorage.setItem('brunaAccountSessionStatusV1','ready');
+   localStorage.removeItem('brunaAccountSwapPendingV1');
    location.reload();
   }catch(error){
    try{
@@ -1188,6 +1207,7 @@ try{
     for(const [key,value] of Object.entries(oldData))localStorage.setItem(key,value);
     localStorage.setItem('brunaPlannerCloudOwnerUidV1',oldOwner);
     localStorage.setItem('brunaAccountSessionStatusV1','locked');
+    localStorage.removeItem('brunaAccountSwapPendingV1');
    }catch(restoreError){}
    alert('Não foi possível trocar a conta com segurança. Os dados anteriores foram mantidos. '+error.message);
   }
