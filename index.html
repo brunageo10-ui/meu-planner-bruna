@@ -1153,15 +1153,56 @@ try{
  document.body.appendChild(accountGuard);
  accountGuard.querySelector('#plannerAccountGuardLogin').onclick=()=>login.click();
  accountGuard.querySelector('#plannerAccountGuardLogout').onclick=()=>logout.click();
+ const profileDataKeys=['brunaTasks','brunaFolders','brunaCategoryNames','brunaScheduled','brunaShoppingV1','brunaPlannerNomeV1','brunaGastosLancamentos','brunaGastosFechamentos','brunaGastosFechamentosMensais','brunaGastos','brunaNotificationHistory','brunaOfflineReminderIds','brunaCloudAutoBackupEnabledV1','brunaCloudAutoBackupDeviceV1'];
+ const profilePrefix='brunaAccountDataV1:';
+ const switchButton=document.createElement('button');
+ switchButton.type='button';switchButton.textContent='Trocar para esta conta';
+ Object.assign(switchButton.style,{background:'#8a1238',color:'#fff',border:'0',borderRadius:'16px',padding:'15px 22px',fontWeight:'700',margin:'10px'});
+ accountGuard.querySelector('div').appendChild(switchButton);
+ function localProfileSnapshot(){
+  const data={};for(const key of profileDataKeys){const value=localStorage.getItem(key);if(value!==null)data[key]=value}return data;
+ }
+ function switchLocalProfile(user){
+  const previous=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
+  if(!previous||!user||previous===user.uid)return;
+  if(!confirm('Trocar para a conta '+(user.email||'Google')+'? Os dados atuais serão guardados em um perfil local separado. A nova conta começará vazia se ainda não tiver dados neste aparelho. Nenhum backup na nuvem será apagado.'))return;
+  const oldData=localProfileSnapshot(),oldOwner=previous;
+  const existing=localStorage.getItem(profilePrefix+user.uid);
+  let nextData={};
+  try{
+   if(existing!==null){
+    nextData=JSON.parse(existing);
+    if(!nextData||typeof nextData!=='object'||Array.isArray(nextData)||Object.keys(nextData).some(key=>!profileDataKeys.includes(key)||typeof nextData[key]!=='string'))throw Error('Perfil salvo inválido');
+   }
+   // Arquiva primeiro; se o armazenamento estiver cheio, nada é removido.
+   localStorage.setItem(profilePrefix+oldOwner,JSON.stringify(oldData));
+   if(localStorage.getItem(profilePrefix+oldOwner)!==JSON.stringify(oldData))throw Error('Não foi possível conferir a cópia local');
+   for(const key of profileDataKeys)localStorage.removeItem(key);
+   for(const [key,value] of Object.entries(nextData))localStorage.setItem(key,value);
+   localStorage.setItem('brunaPlannerCloudOwnerUidV1',user.uid);
+   localStorage.setItem('brunaAccountSessionStatusV1','ready');
+   location.reload();
+  }catch(error){
+   try{
+    for(const key of profileDataKeys)localStorage.removeItem(key);
+    for(const [key,value] of Object.entries(oldData))localStorage.setItem(key,value);
+    localStorage.setItem('brunaPlannerCloudOwnerUidV1',oldOwner);
+    localStorage.setItem('brunaAccountSessionStatusV1','locked');
+   }catch(restoreError){}
+   alert('Não foi possível trocar a conta com segurança. Os dados anteriores foram mantidos. '+error.message);
+  }
+ }
+ switchButton.onclick=()=>switchLocalProfile(auth.currentUser);
  function refreshAccountGuard(user){
   const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
-  if(!owner){accountGuard.style.display='none';return}
-  const mismatch=!!user&&owner!==user.uid;
-  const signedOut=!user;
+  const mismatch=!!owner&&!!user&&owner!==user.uid;
+  const signedOut=!!owner&&!user;
+  if(owner)localStorage.setItem('brunaAccountSessionStatusV1',mismatch||signedOut?'locked':'ready');
   accountGuard.style.display=mismatch||signedOut?'block':'none';
-  accountGuard.querySelector('#plannerAccountGuardText').textContent=mismatch?'Este aparelho já possui dados vinculados a outra conta Google. Para proteger os compromissos e gastos, volte à conta original ou use outro aparelho. Nenhum dado foi apagado.':'Entre na conta Google vinculada a este aparelho para ver os dados. Se estiver sem internet, as informações salvas continuam no aparelho, mas pode ser necessário recuperar a conexão para entrar novamente.';
+  accountGuard.querySelector('#plannerAccountGuardText').textContent=mismatch?'Este aparelho está associado a outra conta. Você pode voltar à conta original ou trocar de perfil. Antes da troca, seus dados atuais serão guardados separadamente neste aparelho.':'Entre com a conta Google vinculada a este aparelho para abrir os dados protegidos.';
   accountGuard.querySelector('#plannerAccountGuardLogin').style.display=mismatch?'none':'inline-block';
   accountGuard.querySelector('#plannerAccountGuardLogout').style.display=mismatch?'inline-block':'none';
+  switchButton.style.display=mismatch?'inline-block':'none';
  }
  onAuthStateChanged(auth,user=>{refreshAccountGuard(user);copiesBox.style.display=user?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&autoEnabled())runAutoBackup();status.textContent=user?'Conectado ao Google: '+(user.email||'conta autenticada'):'Entre com sua conta Google para preparar a sincronização.';login.style.display=user?'none':'block';logout.style.display=user?'block':'none';backupBtn.style.display=user?'block':'none';checkBtn.style.display=user?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
  login.onclick=async()=>{login.disabled=true;status.textContent='Abrindo login Google…';try{await signInWithPopup(auth,provider)}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,provider)}catch(err){status.textContent='Não foi possível entrar: '+err.code}}else{status.textContent='Não foi possível entrar: '+e.code}}finally{login.disabled=false}};
