@@ -58,5 +58,13 @@ main{max-width:650px;margin:auto;padding:54px 20px calc(35px + env(safe-area-ins
 </section>
 <div class="footer"><a href="reset.html">Destravar app</a></div>
 </main>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./OneSignalSDKWorker.js', {scope: './'})
+      .catch(() => { /* Uso online continua disponível sem cache offline. */ });
+  });
+}
+</script>
 </body>
 </html>
