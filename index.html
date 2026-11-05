@@ -1142,7 +1142,28 @@ try{
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&autoEnabled())runAutoBackup()});
  window.addEventListener('pageshow',()=>{if(autoEnabled())runAutoBackup()});
 
- onAuthStateChanged(auth,user=>{copiesBox.style.display=user?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&autoEnabled())runAutoBackup();status.textContent=user?'Conectado ao Google: '+(user.email||'conta autenticada'):'Entre com sua conta Google para preparar a sincronização.';login.style.display=user?'none':'block';logout.style.display=user?'block':'none';backupBtn.style.display=user?'block':'none';checkBtn.style.display=user?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
+ // Proteção não destrutiva: uma instalação com dados vinculados não deve
+ // mostrar informações pessoais quando outra conta Google estiver conectada.
+ const accountGuard=document.createElement('div');
+ accountGuard.id='plannerAccountGuard';
+ accountGuard.setAttribute('role','alertdialog');
+ accountGuard.setAttribute('aria-modal','true');
+ Object.assign(accountGuard.style,{position:'fixed',inset:'0',zIndex:'2147483647',background:'#fff8fa',padding:'min(12vh,90px) 22px 24px',overflowY:'auto',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif',color:'#42101f',display:'none',textAlign:'center'});
+ accountGuard.innerHTML='<div style="max-width:440px;margin:auto;background:white;border:1px solid #eac9d4;border-radius:24px;padding:26px 20px;box-shadow:0 12px 30px #8a12381c"><div style="font-size:44px">🔒</div><h2>Dados protegidos</h2><p id="plannerAccountGuardText" style="line-height:1.5"></p><button id="plannerAccountGuardLogin" style="background:#8a1238;color:white;border:0;border-radius:16px;padding:15px 22px;font-weight:700">Entrar com minha conta Google</button><button id="plannerAccountGuardLogout" style="display:none;background:#f9e4ea;color:#8a1238;border:0;border-radius:16px;padding:15px 22px;font-weight:700;margin:10px">Sair desta conta</button></div>';
+ document.body.appendChild(accountGuard);
+ accountGuard.querySelector('#plannerAccountGuardLogin').onclick=()=>login.click();
+ accountGuard.querySelector('#plannerAccountGuardLogout').onclick=()=>logout.click();
+ function refreshAccountGuard(user){
+  const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
+  if(!owner){accountGuard.style.display='none';return}
+  const mismatch=!!user&&owner!==user.uid;
+  const signedOut=!user;
+  accountGuard.style.display=mismatch||signedOut?'block':'none';
+  accountGuard.querySelector('#plannerAccountGuardText').textContent=mismatch?'Este aparelho já possui dados vinculados a outra conta Google. Para proteger os compromissos e gastos, volte à conta original ou use outro aparelho. Nenhum dado foi apagado.':'Entre na conta Google vinculada a este aparelho para ver os dados. Se estiver sem internet, as informações salvas continuam no aparelho, mas pode ser necessário recuperar a conexão para entrar novamente.';
+  accountGuard.querySelector('#plannerAccountGuardLogin').style.display=mismatch?'none':'inline-block';
+  accountGuard.querySelector('#plannerAccountGuardLogout').style.display=mismatch?'inline-block':'none';
+ }
+ onAuthStateChanged(auth,user=>{refreshAccountGuard(user);copiesBox.style.display=user?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&autoEnabled())runAutoBackup();status.textContent=user?'Conectado ao Google: '+(user.email||'conta autenticada'):'Entre com sua conta Google para preparar a sincronização.';login.style.display=user?'none':'block';logout.style.display=user?'block':'none';backupBtn.style.display=user?'block':'none';checkBtn.style.display=user?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
  login.onclick=async()=>{login.disabled=true;status.textContent='Abrindo login Google…';try{await signInWithPopup(auth,provider)}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,provider)}catch(err){status.textContent='Não foi possível entrar: '+err.code}}else{status.textContent='Não foi possível entrar: '+e.code}}finally{login.disabled=false}};
  backupBtn.onclick=async()=>{
  const user=auth.currentUser;
