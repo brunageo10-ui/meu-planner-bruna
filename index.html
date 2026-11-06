@@ -1008,6 +1008,8 @@ try{
    if(localStorage.getItem('brunaPlannerCloudOwnerUidV1'))throw Error('Entre com a conta vinculada a este aparelho.');
    user=(await signInAnonymously(auth)).user;
   }
+  const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
+  if(owner&&owner!==user.uid)throw Error('Conta diferente da vinculada a estes dados. Lembrete não enviado.');
   return await user.getIdToken();
  };
  
@@ -1108,7 +1110,7 @@ try{
  }
  async function runAutoBackup(force=false){
   const user=auth.currentUser;
-  if(!user||!autoEnabled()||autoRunning||(!force&&document.visibilityState==='hidden'))return;
+  if(!user||user.isAnonymous||!autoEnabled()||autoRunning||(!force&&document.visibilityState==='hidden'))return;
   const owner=localStorage.getItem('brunaPlannerCloudOwnerUidV1');
   if(!owner||owner!==user.uid){autoStatus.textContent='🛡️ Backup automático pausado: confirme a vinculação da conta no backup manual.';return}
   const data=localSnapshot();if(!Object.keys(data).length)return;
@@ -1173,7 +1175,7 @@ try{
   accountGuard.querySelector('#plannerAccountGuardLogin').style.display=mismatch?'none':'inline-block';
   accountGuard.querySelector('#plannerAccountGuardLogout').style.display=mismatch?'inline-block':'none';
  }
- onAuthStateChanged(auth,user=>{if(!user&&!localStorage.getItem('brunaPlannerCloudOwnerUidV1'))signInAnonymously(auth).catch(()=>{});refreshAccountGuard(user);copiesBox.style.display=user&&!user.isAnonymous?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&autoEnabled())runAutoBackup();status.textContent=user?(user.isAnonymous?'Modo visitante: identidade individual ativada. Entre com Google para proteger seus backups.':'Conectado ao Google: '+(user.email||'conta autenticada')):'Preparando sua identidade individual…';login.style.display=user&&!user.isAnonymous?'none':'block';logout.style.display=user&&!user.isAnonymous?'block':'none';backupBtn.style.display=user&&!user.isAnonymous?'block':'none';checkBtn.style.display=user&&!user.isAnonymous?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
+ onAuthStateChanged(auth,user=>{if(!user&&!localStorage.getItem('brunaPlannerCloudOwnerUidV1'))signInAnonymously(auth).catch(()=>{});refreshAccountGuard(user);copiesBox.style.display=user&&!user.isAnonymous?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&!user.isAnonymous&&autoEnabled())runAutoBackup();status.textContent=user?(user.isAnonymous?'Modo visitante: identidade individual ativada. Entre com Google para proteger seus backups.':'Conectado ao Google: '+(user.email||'conta autenticada')):'Preparando sua identidade individual…';login.style.display=user&&!user.isAnonymous?'none':'block';logout.style.display=user&&!user.isAnonymous?'block':'none';backupBtn.style.display=user&&!user.isAnonymous?'block':'none';checkBtn.style.display=user&&!user.isAnonymous?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
  login.onclick=async()=>{login.disabled=true;status.textContent='Abrindo login Google…';const visitante=auth.currentUser?.isAnonymous?auth.currentUser:null;try{if(visitante)await linkWithPopup(visitante,provider);else await signInWithPopup(auth,provider)}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){try{if(visitante)await linkWithRedirect(visitante,provider);else await signInWithRedirect(auth,provider)}catch(err){status.textContent='Não foi possível entrar: '+err.code}}else if(visitante&&(e.code==='auth/credential-already-in-use'||e.code==='auth/email-already-in-use')){status.textContent='Este Google já possui uma conta. Os lembretes deste visitante foram preservados; nenhuma conta foi trocada. Para evitar misturar dados, não avançamos automaticamente.'}else{status.textContent='Não foi possível entrar: '+e.code}}finally{login.disabled=false}};
  backupBtn.onclick=async()=>{
  const user=auth.currentUser;
