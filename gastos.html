@@ -179,6 +179,42 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .editExpenseActions button{flex:1;border:1px solid #e8c0ce;border-radius:12px;padding:13px 8px;font-size:15px;font-weight:800;background:#fce9ef;color:#8a1238}
 .editExpenseActions button[type=submit]{background:#8a1238;color:white}
 @media(max-width:390px){.groupEntry{flex-wrap:wrap}.entryManage{width:100%;justify-content:flex-start}}
+
+/* Painel mensal: destaque somente para os valores do mês selecionado. */
+.monthCard{padding:14px 16px!important;margin-bottom:10px}
+.monthCard .title{font-size:17px;font-weight:850;margin-bottom:10px}
+.monthCard .monthBar{display:flex;align-items:center;gap:8px}
+.monthCard .monthBar .field{flex:1}
+.monthCard .monthBar .field label{display:none}
+.monthCard input[type=month]{width:100%;min-width:0;font-size:15px;padding:11px 8px}
+.monthArrow{flex:0 0 40px;height:43px;border-radius:14px;background:#fff3f6;border:1px solid #edccda;color:var(--w);font-size:28px;font-weight:750}
+.monthCurrent{display:block;margin:8px 0 0 auto;padding:5px 0;border:0;background:none;color:var(--w);font-weight:750;font-size:12px}
+.monthCard #monthLabel{font-size:12px}
+.monthlyDashboard{margin:0 0 18px;padding:16px!important;border-color:#eac9d4!important;background:#fffdfd!important}
+.dashTitle{font-size:19px;font-weight:900;color:var(--w2);margin-bottom:13px}
+.dashMoneyGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.dashMetric{border-radius:16px;padding:14px 10px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.dashMetric span{font-size:13px;font-weight:800}
+.dashMetric strong{font-size:clamp(17px,4.3vw,25px);letter-spacing:-.6px;overflow-wrap:anywhere}
+.dashIncome{background:#eaf8ef}.dashIncome span{color:#24694c}
+.dashExpense{background:#fff0f2}.dashExpense span{color:#9f3750}
+.dashBalance{margin-top:10px;background:#f8f0f3;border-radius:17px;padding:16px;text-align:center;display:flex;flex-direction:column;gap:5px}
+.dashBalance span{font-size:13px;color:#766970;font-weight:800}
+.dashBalance strong{font-size:clamp(24px,6vw,32px);font-weight:900;letter-spacing:-1px;overflow-wrap:anywhere}
+.dashBalance small{font-size:12px;color:#796970}
+.dashCompare{border-top:1px solid #f0dce3;margin-top:16px;padding-top:12px}
+.dashCompare>b{font-size:14px;color:var(--w2)}
+.dashBarLine{display:grid;grid-template-columns:61px minmax(0,1fr);gap:8px;align-items:center;margin-top:9px}
+.dashBarLine span{font-size:12px;color:#756970}
+.dashBarTrack{height:12px;background:#f0e9ed;border-radius:999px;overflow:hidden}
+.dashBarFill{height:100%;width:0;border-radius:999px;transition:width .25s}
+.incomeFill{background:#2c9769}.expenseFill{background:#cf526a}
+.dashCategories{border-top:1px solid #f0dce3;margin-top:15px;padding-top:12px}
+.dashCategories summary{font-size:14px;color:var(--w2);font-weight:800;cursor:pointer;display:flex;justify-content:space-between}
+.dashCategories summary::-webkit-details-marker{display:none}
+.dashCategories #dashCategoryList{margin-top:10px}
+.dashCatRow{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:9px 2px;border-bottom:1px solid #f3e5e9}
+@media(max-width:350px){.dashMetric{padding:12px 7px}.dashMetric span{font-size:12px}}
 </style>
 </head>
 <body>
@@ -188,6 +224,24 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     <button class="round" onclick="location.href='index.html'"><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></svg></button>
   </div>
 
+  <section class="card monthCard">
+    <div class="title">📅 Escolha o mês</div>
+    <div class="monthBar"><button type="button" class="monthArrow" id="prevMonthBtn" aria-label="Mês anterior">‹</button><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button type="button" class="monthArrow" id="nextMonthBtn" aria-label="Próximo mês">›</button></div><button class="monthCurrent" type="button" id="mesAtualBtn">Voltar ao mês atual</button>
+    <div class="hint" id="monthLabel"></div>
+  </section>
+<section class="card monthlyDashboard" aria-label="Resumo financeiro do mês">
+  <div class="dashTitle">Resumo do mês</div>
+  <div class="dashMoneyGrid">
+    <div class="dashMetric dashIncome"><span>↙ Entradas</span><strong class="in" id="monthIn">R$ 0,00</strong></div>
+    <div class="dashMetric dashExpense"><span>↗ Saídas</span><strong class="out" id="monthOut">R$ 0,00</strong></div>
+  </div>
+  <div class="dashBalance"><span>Saldo do mês</span><strong id="monthBalance">R$ 0,00</strong><small id="monthBalanceStatus">Confira suas movimentações</small></div>
+  <div class="dashCompare"><b>Comparação do mês</b>
+    <div class="dashBarLine"><span>Entradas</span><div class="dashBarTrack"><div class="dashBarFill incomeFill" id="incomeBar"></div></div></div>
+    <div class="dashBarLine"><span>Saídas</span><div class="dashBarTrack"><div class="dashBarFill expenseFill" id="expenseBar"></div></div></div>
+  </div>
+  <details class="dashCategories"><summary>Gastos por categoria <span>⌄</span></summary><div id="dashCategoryList"></div></details>
+</section>
     <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
   <details class="card entryCard entryAccordion" open>
     <summary class="accordionHeading"><span><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4"/><path d="M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20z"/></svg> Lançamento rápido</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
@@ -224,11 +278,7 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
     </div>
   </details>
 
-  <section class="card monthCard">
-    <div class="title">Mês de análise</div>
-    <div class="monthBar"><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button class="btn" id="mesAtualBtn">Mês atual</button></div>
-    <div class="hint" id="monthLabel"></div>
-  </section>
+
   <details class="card closingCard closingAccordion">
     <summary class="closingHeading">Fechamento do mês <span aria-hidden="true">⌄</span></summary>
     <div class="closingInner">
@@ -288,14 +338,23 @@ function descFromQuick(s){let d=valorFalado(s).replace(/r\$|reais|real/gi,' ').r
 function add(obj){items.unshift({id:Date.now(),tipo:obj.tipo||tipo,valor:Number(obj.valor)||0,desc:obj.desc||'Lançamento',cat:obj.cat||'Outros',forma:obj.forma||'Pix',data:obj.data||today(),created:new Date().toISOString(),...(obj.repeticaoId?{repeticaoId:obj.repeticaoId,repeticaoMes:obj.repeticaoMes}:{})});save();render();}
 function addManual(){const valor=parseValor($('valor').value);if(!valor){toast('Informe o valor.');return}const data=$('data').value||today();const repetir=$('repeatMonthly').checked;if(repetir&&tipo!=='saida'){toast('Repetição mensal disponível para despesas.');return}const obj={tipo,valor,desc:$('desc').value.trim()||'Lançamento',cat:$('cat').value,forma:$('forma').value,data};if(repetir){const id='mensal-'+Date.now()+'-'+Math.floor(Math.random()*100000),mes=data.slice(0,7);repeticoes.push({id,valor,desc:obj.desc,cat:obj.cat,forma:obj.forma,dia:Number(data.slice(8,10)),ultimo:mes,ativo:true});saveRepeticoes();add({...obj,repeticaoId:id,repeticaoMes:mes})}else add(obj);$('valor').value='';$('desc').value='';$('repeatMonthly').checked=false;toast(repetir?'Gasto mensal cadastrado 🔁':tipo==='entrada'?'Entrada salva 💰':'Gasto salvo 💸')}
 function addQuick(){const q=$('quickText').value.trim();if(!q){toast('Digite ou fale um lançamento.');return}const v=parseValor(q);if(!v){toast('Não encontrei o valor. Ex.: 150 gasolina');return}const t=inferTipo(q);add({tipo:t,valor:v,desc:descFromQuick(q),cat:inferCat(q,t),forma:inferForma(q),data:today()});$('quickText').value='';toast(t==='entrada'?'Entrada organizada 💰':'Gasto organizado 💸')}
-$('addBtn').onclick=addManual;$('quickBtn').onclick=addQuick;$('quickText').addEventListener('keydown',e=>{if(e.key==='Enter')addQuick()});$('mes').addEventListener('change',render);$('mesAtualBtn').onclick=()=>{$('mes').value=monthNow();render()};
+$('addBtn').onclick=addManual;$('quickBtn').onclick=addQuick;$('quickText').addEventListener('keydown',e=>{if(e.key==='Enter')addQuick()});$('mes').addEventListener('change',render);$('mesAtualBtn').onclick=()=>{$('mes').value=monthNow();render()};function shiftFinanceMonth(delta){const parts=($('mes').value||monthNow()).split('-').map(Number);const d=new Date(parts[0],parts[1]-1+delta,1);$('mes').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');render()}$('prevMonthBtn').onclick=()=>shiftFinanceMonth(-1);$('nextMonthBtn').onclick=()=>shiftFinanceMonth(1);
 function monthName(ym){const parts=String(ym||monthNow()).split('-');const d=new Date(Number(parts[0]),Number(parts[1])-1,1);return d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
 function monthItems(){const ym=$('mes').value||monthNow();return items.filter(i=>String(i.data||'').slice(0,7)===ym)}
 function calcMonth(){const arr=monthItems();let entradas=0,saidas=0;const cats={};arr.forEach(i=>{const val=Number(i.valor)||0;if(i.tipo==='entrada'){entradas+=val}else{saidas+=val;cats[i.cat||'Outros']=(cats[i.cat||'Outros']||0)+val}});return {arr,entradas,saidas,saldo:entradas-saidas,cats}}
 function calcAcumulado(ym){let entradas=0,saidas=0;items.forEach(i=>{const mes=String(i.data||'').slice(0,7);if(!/^\d{4}-\d{2}$/.test(mes)||mes>ym)return;const val=Number(i.valor)||0;if(i.tipo==='entrada')entradas+=val;else saidas+=val});return {entradas,saidas,saldo:entradas-saidas}}
 const groupIncomeIcon="<svg class=\"financeIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v18M5 12h14\"/><circle cx=\"12\" cy=\"12\" r=\"9\"/></svg>";
 const groupExpenseIcon="<svg class=\"financeIcon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 7h16v13H4zM4 10h16M16 15h2\"/></svg>";
-function render(){gerarMensais();const ym=$('mes').value||monthNow();$('monthLabel').textContent='Visualizando: '+monthName(ym);const r=calcMonth();const acumulado=calcAcumulado(ym);$('totalIn').textContent=money(acumulado.entradas);$('totalOut').textContent=money(acumulado.saidas);$('saldo').textContent=money(acumulado.saldo);$('saldo').style.color=acumulado.saldo>=0?'var(--green)':'var(--red)';$('fechamentoBox').innerHTML=`<div class="closeLine"><span>Mês</span><b>${monthName(ym)}</b></div><div class="closeLine"><span>Entradas</span><b style="color:var(--green)">${money(r.entradas)}</b></div><div class="closeLine"><span>Gastos</span><b style="color:var(--red)">${money(r.saidas)}</b></div><div class="closeLine"><span>Saldo final</span><b style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${money(r.saldo)}</b></div><div class="closeLine"><span>Lançamentos</span><b>${r.arr.length}</b></div>`;const catEntries=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]);$('catResumo').innerHTML=catEntries.length?catEntries.map(([c,v])=>`<div class="catRow"><span>${escapeHtml(c)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty">Sem gastos por categoria neste mês.</div>';const saved=fechamentos[ym];$('fechamentoStatus').textContent=saved?'Fechamento salvo em '+new Date(saved.savedAt).toLocaleString('pt-BR')+'.':'Nenhum fechamento salvo para este mês.';const list=$('list');if(!r.arr.length){list.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return}const groups=new Map();r.arr.forEach(i=>{const name=String(i.desc||'Lançamento').trim().replace(/\\s+/g,' ');const key=(i.tipo||'saida')+'|'+name.toLocaleLowerCase('pt-BR');if(!groups.has(key))groups.set(key,{name,tipo:i.tipo,rows:[],total:0});const g=groups.get(key);g.rows.push(i);g.total+=Number(i.valor)||0});list.innerHTML=Array.from(groups.values()).map(g=>`<details class="expenseGroup"><summary><span class="groupName"><span class="groupTitle"><span class="groupIcon ${g.tipo==='entrada'?'groupIncome':'groupExpense'}">${g.tipo==='entrada'?groupIncomeIcon:groupExpenseIcon}</span><span class="groupTitleText">${escapeHtml(g.name)}</span></span><small>${g.rows.length} ${g.rows.length===1?'lançamento':'lançamentos'} • toque para ver</small></span><span class="groupRight"><b class="money ${g.tipo==='entrada'?'in':'out'}">${g.tipo==='entrada'?'+':'-'} ${money(g.total)}</b><span class="groupChevron" aria-hidden="true">⌄</span></span></summary><div class="groupEntries">${g.rows.map(i=>`<div class="groupEntry"><div><div class="meta">${escapeHtml(i.data||'')} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div></div><div class="entryManage"><button type="button" class="entryEdit" onclick="editItem(${i.id})">✏️ Editar</button>${i.repeticaoId&&repeticoes.some(x=>x.id===i.repeticaoId&&x.ativo)?`<button type="button" class="entryEdit" onclick="pararMensal(\'${i.repeticaoId}\')">⏹ Parar repetição</button>`:""}<button type="button" class="entryDelete" onclick="delItem(${i.id})">🗑️ Excluir</button></div></div>`).join('')}</div></details>`).join('')}
+function render(){gerarMensais();const ym=$('mes').value||monthNow();$('monthLabel').textContent='Visualizando: '+monthName(ym);const r=calcMonth();const acumulado=calcAcumulado(ym);
+$('monthIn').textContent=money(r.entradas);
+$('monthOut').textContent=money(r.saidas);
+$('monthBalance').textContent=money(r.saldo);
+$('monthBalance').style.color=r.saldo>=0?'var(--green)':'var(--red)';
+$('monthBalanceStatus').textContent=r.arr.length===0?'Ainda não há movimentações neste mês.':r.saldo>0?'Saldo positivo no período':r.saldo<0?'Saídas maiores que as entradas':'Entradas e saídas equilibradas';
+const scale=Math.max(r.entradas,r.saidas,1);
+$('incomeBar').style.width=(100*r.entradas/scale).toFixed(1)+'%';
+$('expenseBar').style.width=(100*r.saidas/scale).toFixed(1)+'%';
+$('dashCategoryList').innerHTML=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>'<div class="dashCatRow"><span>'+escapeHtml(cat)+'</span><strong>'+money(val)+'</strong></div>').join('')||'<div class="empty">Sem saídas neste mês.</div>';$('totalIn').textContent=money(acumulado.entradas);$('totalOut').textContent=money(acumulado.saidas);$('saldo').textContent=money(acumulado.saldo);$('saldo').style.color=acumulado.saldo>=0?'var(--green)':'var(--red)';$('fechamentoBox').innerHTML=`<div class="closeLine"><span>Mês</span><b>${monthName(ym)}</b></div><div class="closeLine"><span>Entradas</span><b style="color:var(--green)">${money(r.entradas)}</b></div><div class="closeLine"><span>Gastos</span><b style="color:var(--red)">${money(r.saidas)}</b></div><div class="closeLine"><span>Saldo final</span><b style="color:${r.saldo>=0?'var(--green)':'var(--red)'}">${money(r.saldo)}</b></div><div class="closeLine"><span>Lançamentos</span><b>${r.arr.length}</b></div>`;const catEntries=Object.entries(r.cats).sort((a,b)=>b[1]-a[1]);$('catResumo').innerHTML=catEntries.length?catEntries.map(([c,v])=>`<div class="catRow"><span>${escapeHtml(c)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty">Sem gastos por categoria neste mês.</div>';const saved=fechamentos[ym];$('fechamentoStatus').textContent=saved?'Fechamento salvo em '+new Date(saved.savedAt).toLocaleString('pt-BR')+'.':'Nenhum fechamento salvo para este mês.';const list=$('list');if(!r.arr.length){list.innerHTML='<div class="empty">Nenhum lançamento neste mês.</div>';return}const groups=new Map();r.arr.forEach(i=>{const name=String(i.desc||'Lançamento').trim().replace(/\\s+/g,' ');const key=(i.tipo||'saida')+'|'+name.toLocaleLowerCase('pt-BR');if(!groups.has(key))groups.set(key,{name,tipo:i.tipo,rows:[],total:0});const g=groups.get(key);g.rows.push(i);g.total+=Number(i.valor)||0});list.innerHTML=Array.from(groups.values()).map(g=>`<details class="expenseGroup"><summary><span class="groupName"><span class="groupTitle"><span class="groupIcon ${g.tipo==='entrada'?'groupIncome':'groupExpense'}">${g.tipo==='entrada'?groupIncomeIcon:groupExpenseIcon}</span><span class="groupTitleText">${escapeHtml(g.name)}</span></span><small>${g.rows.length} ${g.rows.length===1?'lançamento':'lançamentos'} • toque para ver</small></span><span class="groupRight"><b class="money ${g.tipo==='entrada'?'in':'out'}">${g.tipo==='entrada'?'+':'-'} ${money(g.total)}</b><span class="groupChevron" aria-hidden="true">⌄</span></span></summary><div class="groupEntries">${g.rows.map(i=>`<div class="groupEntry"><div><div class="meta">${escapeHtml(i.data||'')} • ${escapeHtml(i.cat||'')} • ${escapeHtml(i.forma||'')}</div><div class="money ${i.tipo==='entrada'?'in':'out'}">${i.tipo==='entrada'?'+':'-'} ${money(i.valor)}</div></div><div class="entryManage"><button type="button" class="entryEdit" onclick="editItem(${i.id})">✏️ Editar</button>${i.repeticaoId&&repeticoes.some(x=>x.id===i.repeticaoId&&x.ativo)?`<button type="button" class="entryEdit" onclick="pararMensal(\'${i.repeticaoId}\')">⏹ Parar repetição</button>`:""}<button type="button" class="entryDelete" onclick="delItem(${i.id})">🗑️ Excluir</button></div></div>`).join('')}</div></details>`).join('')}
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 window.editItem=id=>{
  const item=items.find(i=>String(i.id)===String(id));if(!item)return toast('Lançamento não encontrado.');
