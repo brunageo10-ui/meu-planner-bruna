@@ -25,14 +25,19 @@ async function verifyUser(request) {
      typeof claims.exp!=="number"||claims.exp<=now||
      typeof claims.iat!=="number"||claims.iat>now||
      typeof claims.auth_time!=="number"||claims.auth_time>now)throw new Error("INVALID_TOKEN");
-  if(!cachedJwks||Date.now()>=cacheExpires){
+  async function refreshJwks(){
     const response=await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
     if(!response.ok)throw new Error("AUTH_UNAVAILABLE");
-    cachedJwks=await response.json();
+    const keys=await response.json();
+    if(!Array.isArray(keys.keys))throw new Error("AUTH_UNAVAILABLE");
+    cachedJwks=keys;
     const maxAge=Number(/max-age=(\d+)/.exec(response.headers.get("cache-control")||"")?.[1]||600);
     cacheExpires=Date.now()+Math.min(Math.max(maxAge,60),3600)*1000;
   }
-  const jwk=cachedJwks.keys?.find(k=>k.kid===head.kid&&k.kty==="RSA");
+  if(!cachedJwks||Date.now()>=cacheExpires)await refreshJwks();
+  let jwk=cachedJwks.keys.find(k=>k.kid===head.kid&&k.kty==="RSA");
+  // Chaves públicas do Firebase podem mudar antes do fim do cache.
+  if(!jwk){await refreshJwks();jwk=cachedJwks.keys.find(k=>k.kid===head.kid&&k.kty==="RSA")}
   if(!jwk)throw new Error("INVALID_TOKEN");
   const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
   const signed=new TextEncoder().encode(parts[0]+"."+parts[1]);
