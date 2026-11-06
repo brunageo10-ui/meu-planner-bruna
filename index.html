@@ -342,7 +342,8 @@ main{max-width:100%;overflow-x:clip!important}
 const VERSION='14.1',APP_ID='93373f2b-4612-4a68-9eaa-c0fdade3aee0',WORKER_URL='https://still-dew-5c29.brunageo10.workers.dev/';
 const DEFAULT=['Tudo','Escola','SGS Vinho & Café','Pessoal','Compromissos','Contas','Compras','Hábitos','Ideias'];
 const $=id=>document.getElementById(id);const E={};['input','add','voice','micBox','micTitle','micHint','versionLine','searchBtn','settingsBtn','searchPanel','closeSearch','searchInput','searchResults','todayLabel','todayList','todayCount','schoolCount','taskCount','routineCount','routineMini','historyMini','filters','taskList','routineList','doneList','foldersBtn','notifyBtn','calendarBtn','backupBtn','importBtn','backupFile','notifyStatus','navHome','navCalendar','navPlus','navStats','navProfile','toast'].forEach(id=>E[id]=$(id));
-function pad(n){return String(n).padStart(2,'0')}function dk(d=new Date()){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function label(c){return c==='Tudo'?'Tudo':(catNames[c]||c)}function toast(s){E.toast.textContent=s;E.toast.style.display='block';setTimeout(()=>E.toast.style.display='none',3600)}function loadJSON(k,f){try{let v=JSON.parse(localStorage[k]||'');return v??f}catch(e){return f}}
+function pad(n){return String(n).padStart(2,'0')}function dk(d=new Date()){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function label(c){return c==='Tudo'?'Tudo':(catNames[c]||c)}function toast(s){E.toast.textContent=s;E.toast.style.display='block';setTimeout(()=>E.toast.style.display='none',3600)}async function plannerWorkerHeaders(){if(typeof window.plannerGetIdToken!=='function')throw Error('Identidade ainda indisponível. Tente novamente.');return {'Content-Type':'application/json','Authorization':'Bearer '+await window.plannerGetIdToken()}}
+function loadJSON(k,f){try{let v=JSON.parse(localStorage[k]||'');return v??f}catch(e){return f}}
 let tasks=loadJSON('brunaTasks',[]);if(!Array.isArray(tasks))tasks=[];let oldFolders=loadJSON('brunaFolders',DEFAULT);if(!Array.isArray(oldFolders))oldFolders=DEFAULT;let folders=[...DEFAULT];oldFolders.forEach(f=>{if(f&&!folders.includes(f))folders.push(f)});localStorage.brunaFolders=JSON.stringify(folders);let catNames=loadJSON('brunaCategoryNames',{});let active='Tudo';
 function saveTasks(){localStorage.brunaTasks=JSON.stringify(tasks);render()}
 // Histórico local de respostas recebidas: não é confirmação de entrega no iPhone.
@@ -715,7 +716,7 @@ async function cancelScheduledKey(id,key){
  }
  if(!record.notificationId){rememberNotification('failed',tasks.find(t=>String(t.id)===String(id)),record.sendAt,'Aviso antigo sem identificador');toast('⚠️ Aviso antigo sem identificação. Cancelamento não confirmado.');return false}
  try{
-  const response=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'cancel',notificationId:record.notificationId})});
+  const response=await fetch(WORKER_URL,{method:'POST',headers:await plannerWorkerHeaders(),body:JSON.stringify({action:'cancel',notificationId:record.notificationId})});
   const raw=await response.text();let data={};try{data=JSON.parse(raw)}catch(e){}
   if(!response.ok||data.success===false||data.ok===false||data.errors?.length||data.error)throw Error(data.error||'O servidor não confirmou');
   const latest=scheduled();
@@ -762,7 +763,7 @@ async function scheduleRemote(t){
    if(s[p.key]&&s[p.key].sendAt===p.sendAt.toISOString())continue;
    if(s[p.key]){toast('⚠️ Aviso anterior ainda ativo. Não criei duplicidade.');continue}
    const sub=await getSub();
-   const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:(p.kind==='prepare'?'🧠 Hora de se preparar! '+notificationMessage(t,ev):p.kind==='leave'?'🎒 Hora de sair! '+notificationMessage(t,ev):notificationMessage(t,ev)),sendAfter:p.sendAt.toISOString()})});
+   const r=await fetch(WORKER_URL,{method:'POST',headers:await plannerWorkerHeaders(),body:JSON.stringify({subscriptionId:sub,title:'Meu Planner 💛',message:(p.kind==='prepare'?'🧠 Hora de se preparar! '+notificationMessage(t,ev):p.kind==='leave'?'🎒 Hora de sair! '+notificationMessage(t,ev):notificationMessage(t,ev)),sendAfter:p.sendAt.toISOString()})});
    let j={};try{j=await r.json()}catch(e){}
    if(!r.ok||j.errors?.length||!j.id&&!j.notification_id)throw Error('servidor não confirmou o identificador do aviso');
    const latest=scheduled();latest[p.key]={sendAt:p.sendAt.toISOString(),notificationId:j.id||j.notification_id};saveScheduled(latest);
@@ -995,12 +996,21 @@ E.calendarBtn.onclick=agendarCalendario;E.settingsBtn.onclick=()=>toast('⚙️ 
 </script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,onAuthStateChanged,signOut,signInAnonymously} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import {getFirestore,doc,setDoc,getDoc,getDocs,collection,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 const config={apiKey:"AIzaSyC5134iBFPP2NCdilvoUA2WrRDQnvfK3rQ",authDomain:"meu-planner-bruna.firebaseapp.com",projectId:"meu-planner-bruna",storageBucket:"meu-planner-bruna.firebasestorage.app",messagingSenderId:"323623372558",appId:"1:323623372558:web:6d68ef67985e8963d6795f"};
 const status=document.getElementById('cloudLoginStatus'),login=document.getElementById('cloudLoginBtn'),logout=document.getElementById('cloudLogoutBtn'),backupBtn=document.getElementById('cloudBackupBtn'),backupStatus=document.getElementById('cloudBackupStatus'),checkBtn=document.getElementById('cloudCheckBackupBtn'),downloadBtn=document.getElementById('cloudDownloadBackupBtn'),restoreBtn=document.getElementById('cloudRestoreBackupBtn'),autoBtn=document.getElementById('cloudAutoBackupBtn'),autoStatus=document.getElementById('cloudAutoBackupStatus'),copiesBox=document.getElementById('cloudCopiesBox'),copiesStatus=document.getElementById('cloudCopiesStatus'),copiesCheckBtn=document.getElementById('cloudCopiesCheckBtn'),copiesEntries=document.getElementById('cloudCopiesEntries'),autoRestoreBtn=document.getElementById('cloudAutoRestoreBtn'),autoRestoreStatus=document.getElementById('cloudAutoRestoreStatus');
 try{
  const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();
+ window.plannerGetIdToken=async()=>{
+  let user=auth.currentUser;
+  if(!user){
+   if(localStorage.getItem('brunaPlannerCloudOwnerUidV1'))throw Error('Entre com a conta vinculada a este aparelho.');
+   user=(await signInAnonymously(auth)).user;
+  }
+  return await user.getIdToken();
+ };
+ 
  // Consulta somente leitura: nunca altera backups nem dados do aparelho.
  function showCopyRecord(label,record){
   const wrap=document.createElement('div');wrap.className='cloudCopyEntry';
@@ -1163,7 +1173,7 @@ try{
   accountGuard.querySelector('#plannerAccountGuardLogin').style.display=mismatch?'none':'inline-block';
   accountGuard.querySelector('#plannerAccountGuardLogout').style.display=mismatch?'inline-block':'none';
  }
- onAuthStateChanged(auth,user=>{refreshAccountGuard(user);copiesBox.style.display=user?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&autoEnabled())runAutoBackup();status.textContent=user?'Conectado ao Google: '+(user.email||'conta autenticada'):'Entre com sua conta Google para preparar a sincronização.';login.style.display=user?'none':'block';logout.style.display=user?'block':'none';backupBtn.style.display=user?'block':'none';checkBtn.style.display=user?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
+ onAuthStateChanged(auth,user=>{if(!user&&!localStorage.getItem('brunaPlannerCloudOwnerUidV1'))signInAnonymously(auth).catch(()=>{});refreshAccountGuard(user);copiesBox.style.display=user&&!user.isAnonymous?'block':'none';copiesEntries.replaceChildren();copiesStatus.textContent='Toque em Conferir minhas cópias para consultar os backups disponíveis.';selectedAutoBackup=null;selectedAutoUid=null;autoRestoreBtn.style.display='none';autoRestoreStatus.textContent='';renderAuto();if(user&&autoEnabled())runAutoBackup();status.textContent=user?(user.isAnonymous?'Modo visitante: identidade individual ativada. Entre com Google para proteger seus backups.':'Conectado ao Google: '+(user.email||'conta autenticada')):'Preparando sua identidade individual…';login.style.display=user&&!user.isAnonymous?'none':'block';logout.style.display=user&&!user.isAnonymous?'block':'none';backupBtn.style.display=user&&!user.isAnonymous?'block':'none';checkBtn.style.display=user&&!user.isAnonymous?'block':'none';downloadBtn.style.display='none';restoreBtn.style.display='none';inspectedBackup=null;inspectedUid=null;backupStatus.textContent=user?'Backup disponível para esta conta. Nenhum dado será restaurado automaticamente.':''});
  login.onclick=async()=>{login.disabled=true;status.textContent='Abrindo login Google…';try{await signInWithPopup(auth,provider)}catch(e){if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){try{await signInWithRedirect(auth,provider)}catch(err){status.textContent='Não foi possível entrar: '+err.code}}else{status.textContent='Não foi possível entrar: '+e.code}}finally{login.disabled=false}};
  backupBtn.onclick=async()=>{
  const user=auth.currentUser;
