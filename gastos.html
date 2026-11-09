@@ -229,6 +229,14 @@ main > .monthCard{order:4}
 .monthlyDashboard .dashCategories{display:none!important}
 .monthlyDashboard{padding-bottom:18px}
 .monthlyDashboard .dashBalance{margin-bottom:0}
+
+/* Resumo mensal recolhível por setinha — sem alterar os cálculos. */
+.monthlyDashboard > .dashTitle{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;user-select:none}
+.monthlyDashboard > .dashTitle::-webkit-details-marker{display:none}
+.monthlyDashboard .dashChevron{font-size:26px;color:var(--w);line-height:1;transition:transform .2s ease}
+.monthlyDashboard[open] .dashChevron{transform:rotate(180deg)}
+.monthlyDashboard:not([open]){padding-bottom:18px}
+.monthlyDashboard[open] > .dashTitle{margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -243,8 +251,8 @@ main > .monthCard{order:4}
     <div class="monthBar"><button type="button" class="monthArrow" id="prevMonthBtn" aria-label="Mês anterior">‹</button><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button type="button" class="monthArrow" id="nextMonthBtn" aria-label="Próximo mês">›</button></div><button class="monthCurrent" type="button" id="mesAtualBtn">Voltar ao mês atual</button>
     <div class="hint" id="monthLabel"></div>
   </section>
-<section class="card monthlyDashboard" aria-label="Resumo financeiro do mês">
-  <div class="dashTitle">Resumo do mês</div>
+<details class="card monthlyDashboard" aria-label="Resumo financeiro do mês">
+  <summary class="dashTitle">Resumo do mês <span class="dashChevron" aria-hidden="true">⌄</span></summary>
   <div class="dashMoneyGrid">
     <div class="dashMetric dashIncome"><span>↙ Entradas</span><strong class="in" id="monthIn">R$ 0,00</strong></div>
     <div class="dashMetric dashExpense"><span>↗ Saídas</span><strong class="out" id="monthOut">R$ 0,00</strong></div>
@@ -255,7 +263,7 @@ main > .monthCard{order:4}
     <div class="dashBarLine"><span>Saídas</span><div class="dashBarTrack"><div class="dashBarFill expenseFill" id="expenseBar"></div></div></div>
   </div>
   <details class="dashCategories"><summary>Gastos por categoria <span>⌄</span></summary><div id="dashCategoryList"></div></details>
-</section>
+</details>
     <div class="entryIntro"><h2>Registrar movimentação</h2><p>Escolha como deseja adicionar uma entrada ou despesa.</p></div>
   <details class="card entryCard entryAccordion" open>
     <summary class="accordionHeading"><span><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4"/><path d="M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20z"/></svg> Lançamento rápido</span><span class="accordionChevron" aria-hidden="true">⌄</span></summary>
