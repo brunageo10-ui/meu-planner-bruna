@@ -215,6 +215,20 @@ body{background:radial-gradient(circle at 10% -10%,#fff5f7,#fff8f8 42%,#fbf3f2)}
 .dashCategories #dashCategoryList{margin-top:10px}
 .dashCatRow{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:9px 2px;border-bottom:1px solid #f3e5e9}
 @media(max-width:350px){.dashMetric{padding:12px 7px}.dashMetric span{font-size:12px}}
+
+/* Ordem simplificada da área financeira — 09/11/2026.
+   Apenas apresentação: nenhuma chave, lançamento ou cálculo é alterado. */
+main{display:flex;flex-direction:column}
+main > *{order:5}
+main > .top{order:0}
+main > .entryIntro{order:1}
+main > .entryCard{order:2}
+main > .monthlyDashboard{order:3}
+main > .monthCard{order:4}
+.monthlyDashboard .dashCompare,
+.monthlyDashboard .dashCategories{display:none!important}
+.monthlyDashboard{padding-bottom:18px}
+.monthlyDashboard .dashBalance{margin-bottom:0}
 </style>
 </head>
 <body>
