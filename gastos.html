@@ -258,6 +258,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .dashMetric > span{display:flex;align-items:center;gap:7px}
 .dashMetric .financeIcon{width:18px;height:18px}
 label:has(#repeatMonthly) .financeIcon{width:19px;height:19px}
+
+/* Mesma identidade da nova tela inicial — apresentação financeira. */
+:root{--w:#89193c;--w2:#40202d;--bg:#faf7f7;--ink:#382631;--mut:#786975;--line:#eadfe3;--rose:#f6e9ef;--sh:0 4px 16px rgba(69,29,47,.045)}
+html,body{background:#faf7f7;color:var(--ink)}
+main{max-width:760px;padding-top:20px}
+.hello h1{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;font-size:27px!important;font-weight:850;letter-spacing:-.65px}
+.hello p{font-size:13px;line-height:1.45}
+.card,.item{background:#fff!important;border:1px solid var(--line)!important;border-radius:20px!important;box-shadow:var(--sh)!important}
+.card{padding:16px!important}
+.entryIntro h2,.listHead h2{font-size:22px;letter-spacing:-.5px}
+.dashTitle,.accordionHeading,.summaryAccordionHeading,.monthlyAccordionHeading{font-weight:850;letter-spacing:-.35px}
+.btn.primary{box-shadow:none!important;border-radius:15px}
+.monthlyDashboard .dashMoneyGrid{gap:10px}
+.monthlyDashboard .dashMetric,.monthlyDashboard .dashBalance{border-radius:16px!important}
+.quick,.field input,.field select{border-color:#e6dae0}
+.monthArrow,.round{box-shadow:none;background:#fff}
+@media(max-width:410px){main{padding-top:17px}.card{padding:14px!important}}
 </style>
 </head>
 <body>
