@@ -237,6 +237,22 @@ main > .monthCard{order:4}
 .monthlyDashboard[open] .dashChevron{transform:rotate(180deg)}
 .monthlyDashboard:not([open]){padding-bottom:18px}
 .monthlyDashboard[open] > .dashTitle{margin-bottom:18px}
+
+/* Identidade visual do Planner — 10/11/2026. Não altera lançamentos. */
+:root{--line:#e9d9dd;--rose:#f7e8ed;--sh:0 5px 18px rgba(65,22,39,.055)}
+html,body{background:#fcf9f8}
+main{max-width:760px}
+.card,.item{background:#fff;border-color:var(--line);border-radius:20px;box-shadow:var(--sh)}
+.card{padding:16px}
+.hello h1,.title,.dashTitle,.accordionHeading,.summaryAccordionHeading,.monthlyAccordionHeading{letter-spacing:-.35px}
+.btn,.small,.round,.monthArrow,.monthCurrent,.del{transition:background-color .18s,border-color .18s,box-shadow .18s,transform .18s}
+button:active{transform:scale(.985)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #bd7d93;outline-offset:3px}
+.financeIcon{width:20px;height:20px;flex-shrink:0;vertical-align:middle;stroke-width:1.9}
+.quick:focus-within,.field input:focus,.field select:focus{border-color:#b97990;box-shadow:0 0 0 3px rgba(138,18,56,.07)}
+.monthlyDashboard .dashMetric,.monthlyDashboard .dashBalance{border-radius:17px}
+.monthlyDashboard .dashTitle,.entryAccordion .accordionHeading,.summaryAccordionHeading,.monthlyAccordionHeading{min-height:35px}
+@media(max-width:420px){main{padding-left:15px;padding-right:15px}.card{padding:14px}}
 </style>
 </head>
 <body>
@@ -247,7 +263,7 @@ main > .monthCard{order:4}
   </div>
 
   <section class="card monthCard">
-    <div class="title">📅 Escolha o mês</div>
+    <div class="title">Escolha o mês</div>
     <div class="monthBar"><button type="button" class="monthArrow" id="prevMonthBtn" aria-label="Mês anterior">‹</button><div class="field" style="margin:0"><label>Escolha o mês</label><input id="mes" type="month"></div><button type="button" class="monthArrow" id="nextMonthBtn" aria-label="Próximo mês">›</button></div><button class="monthCurrent" type="button" id="mesAtualBtn">Voltar ao mês atual</button>
     <div class="hint" id="monthLabel"></div>
   </section>
