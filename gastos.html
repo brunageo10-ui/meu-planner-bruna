@@ -253,6 +253,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .monthlyDashboard .dashMetric,.monthlyDashboard .dashBalance{border-radius:17px}
 .monthlyDashboard .dashTitle,.entryAccordion .accordionHeading,.summaryAccordionHeading,.monthlyAccordionHeading{min-height:35px}
 @media(max-width:420px){main{padding-left:15px;padding-right:15px}.card{padding:14px}}
+
+/* Ícones financeiros com alinhamento e traço padronizados. */
+.dashMetric > span{display:flex;align-items:center;gap:7px}
+.dashMetric .financeIcon{width:18px;height:18px}
+label:has(#repeatMonthly) .financeIcon{width:19px;height:19px}
 </style>
 </head>
 <body>
@@ -270,8 +275,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 <details class="card monthlyDashboard" aria-label="Resumo financeiro do mês">
   <summary class="dashTitle">Resumo do mês <span class="dashChevron" aria-hidden="true">⌄</span></summary>
   <div class="dashMoneyGrid">
-    <div class="dashMetric dashIncome"><span>↙ Entradas</span><strong class="in" id="monthIn">R$ 0,00</strong></div>
-    <div class="dashMetric dashExpense"><span>↗ Saídas</span><strong class="out" id="monthOut">R$ 0,00</strong></div>
+    <div class="dashMetric dashIncome"><span><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v14h14M5 18 18 5M10 5h8v8"/></svg> Entradas</span><strong class="in" id="monthIn">R$ 0,00</strong></div>
+    <div class="dashMetric dashExpense"><span><svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5h14M5 6l13 13M10 19h8v-8"/></svg> Saídas</span><strong class="out" id="monthOut">R$ 0,00</strong></div>
   </div>
   <div class="dashBalance"><span>Saldo do mês</span><strong id="monthBalance">R$ 0,00</strong><small id="monthBalanceStatus">Confira suas movimentações</small></div>
   <div class="dashCompare"><b>Comparação do mês</b>
@@ -298,7 +303,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
     <div class="row"><div class="field"><label>Valor</label><input id="valor" inputmode="decimal" placeholder="R$ 0,00"></div><div class="field"><label>Data</label><input id="data" type="date"></div></div>
     <div class="field"><label>Descrição</label><input id="desc" placeholder="Gasolina, mercado, cliente, salário..."></div>
     <div class="row"><div class="field"><label>Categoria</label><select id="cat"><option>Casa</option><option>Alimentação</option><option>Transporte</option><option>Escola</option><option>SGS Vinho & Café</option><option>Saúde</option><option>Lazer</option><option>Recebimentos</option><option>Outros</option></select></div><div class="field"><label>Forma</label><select id="forma"><option>Pix</option><option>Cartão</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>Outro</option></select></div></div>
-    <label style="display:flex;align-items:center;gap:10px;margin:14px 0;font-size:15px"><input id="repeatMonthly" type="checkbox" style="width:22px;height:22px"> 🔁 Repetir este gasto todos os meses</label><div class="note">Mesmo valor e dia de cada mês, até você interromper.</div><button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
+    <label style="display:flex;align-items:center;gap:10px;margin:14px 0;font-size:15px"><input id="repeatMonthly" type="checkbox" style="width:22px;height:22px"> <svg class="financeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"/></svg> Repetir este gasto todos os meses</label><div class="note">Mesmo valor e dia de cada mês, até você interromper.</div><button class="btn primary" id="addBtn" style="width:100%;margin-top:8px">Salvar lançamento</button>
     </div>
   </details>
   <details class="card summaryCard summaryAccordion">
