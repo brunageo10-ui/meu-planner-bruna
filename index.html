@@ -467,16 +467,16 @@ function parseDate(text){
   return isValid(day,month,y)?y+'-'+pad(month)+'-'+pad(day):'';
  };
  // Datas por extenso precisam ter prioridade sobre o dia da semana e o horário.
- const named=s.match(/\\b(?:dia\\s+)?(\\d{1,2})\\s+(?:de\\s+)?(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\\s+(?:de\\s+)?(\\d{4}))?\\b/);
+ const named=s.match(/\b(?:dia\s+)?(\d{1,2})\s+(?:de\s+)?(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+(?:de\s+)?(\d{4}))?\b/);
  if(named)return pick(named[1],months[named[2]],named[3]);
- const numeric=s.match(/\\b(\\d{1,2})[\\/\\-](\\d{1,2})(?:[\\/\\-](\\d{2,4}))?\\b/);
+ const numeric=s.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
  if(numeric)return pick(numeric[1],numeric[2],numeric[3]);
  const d=new Date(today);
  if(s.includes('depois de amanha')){d.setDate(d.getDate()+2);return dk(d)}
  if(s.includes('amanha')){d.setDate(d.getDate()+1);return dk(d)}
  if(s.includes('hoje'))return dk(d);
- for(const k in DAYS)if(new RegExp('\\\\b'+norm(k)+'\\\\b').test(s))return dk(nextDay(DAYS[k]));
- const standalone=s.match(/\\bdia\\s+(\\d{1,2})\\b/);
+ for(const k in DAYS)if(new RegExp('\\b'+norm(k)+'\\b').test(s))return dk(nextDay(DAYS[k]));
+ const standalone=s.match(/\bdia\s+(\d{1,2})\b/);
  if(standalone&&!/todo|todos|mensal/.test(s)){
   let year=today.getFullYear(),month=today.getMonth()+1,day=Number(standalone[1]);
   if(!isValid(day,month,year))return '';
